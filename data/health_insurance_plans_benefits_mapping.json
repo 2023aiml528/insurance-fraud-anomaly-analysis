@@ -1,0 +1,24 @@
+{
+    "Comprehensive Health Plan": [
+        "Hospitalisation Benefits",
+        "Low-Cost Premium for Young People",
+        "Includes Yearly Medical Check-Ups",
+        "Eye and Vision Care",
+        "Skin and Dermatology Care",
+        "Maternity Benefits",
+        "Mental Health Care"
+    ],
+    "Senior Citizen Health Insurance Plans": [
+        "Hospitalisation Benefits",
+        "Includes Yearly Medical Check-Ups",
+        "Covers Ambulance Fees",
+        "Dental Treatment Coverage",
+        "Cardiovascular Health",
+        "Diabetes-Specific Benefits",
+        "Respiratory Health",
+        "Protection from Growing Medical Expenses"
+    ],
+    "Disease-Specific Health Insurance Plans": [
+        "Critical Disease Specific Plans"
+    ]
+}
