@@ -19,8 +19,13 @@ class AnomalyDetector:
 
     def detect_anomalies(self, data):
         # Step 1: Model-based anomalies using Isolation Forest
-        predictions = self.predict(data)
-        data['model_based_anomaly'] = (predictions == -1).astype(int)
+        #predictions = self.predict(data)
+        #data['model_based_anomaly'] = (predictions == -1).astype(int)
+
+        # Rule 3: Policy Dates anomaly (Start Date after End Date)
+        policy_date_anomalies = data[data['Start Date'] > data['End Date']].index.tolist()
+        data['policy_date_anomaly'] = 0
+        data.loc[policy_date_anomalies, 'policy_date_anomaly'] = 1
 
         # Step 2: Rule-based anomalies
         # Rule 1: Hospitalized Date outside Start Date and End Date
@@ -54,7 +59,7 @@ class AnomalyDetector:
 
         # Step 3: Combine all anomalies into a single column
         data['any_anomaly'] = data[
-            ['model_based_anomaly', 'hospitalized_date_anomaly', 'claim_limit_lower_than_total_amount_anomaly', 'policy_date_anomaly', 'fraud_history_anomaly', 'benefits_anomaly','covered_anomaly','document_submitted_anomaly']
+            ['hospitalized_date_anomaly', 'claim_limit_lower_than_total_amount_anomaly', 'policy_date_anomaly', 'benefits_anomaly','covered_anomaly','document_submitted_anomaly']
         ].max(axis=1)
 
         return data
@@ -64,8 +69,9 @@ class AnomalyDetector:
     @staticmethod
     def check_benefits_validity(row):
         import json
+        path = r'data//health_insurance_plans_benefits_mapping.json'
         # Load the mapping from the JSON file
-        with open('../data/health_insurance_plans_benefits_mapping.json', 'r') as f:
+        with open(path) as f:
             health_insurance_plans_benefits_mapping = json.load(f)
         policy_name = row['Policy Name']
         benefits = row['Benefits'].split(';')
