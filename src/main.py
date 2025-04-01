@@ -3,6 +3,7 @@ from utils import load_data, encode_categorical, normalize_data, split_data
 from anomaly_detection import AnomalyDetector
 from data_preprocessing import load_data, preprocess_data
 from models.logistic_regression_model import train_and_evaluate_logistic_regression
+from utils import perform_shap_analysis
 
 print(sys.executable)
 
@@ -20,8 +21,7 @@ print("Post preprocess_data head", data.head().T)
 print("Post preprocess_data \n", data.info())
 
 
-# Normalize the data
-#data = normalize_data(data)
+
 
 # Initialize the anomaly detector
 anomaly_detector = AnomalyDetector(contamination=0.1)
@@ -34,11 +34,13 @@ df_with_anomalies = anomaly_detector.detect_anomalies(data)
 print("Detected anomalies:")
 print(df_with_anomalies[df_with_anomalies['any_anomaly'] == 1].head())
 
+# Normalize the data
+df_with_anomalies_normalized = normalize_data(df_with_anomalies)
 
 # Prepare X with only numeric fields
-X = df_with_anomalies.select_dtypes(include=['number'])
+X = df_with_anomalies_normalized.select_dtypes(include=['number'])
 
-Y = df_with_anomalies['Fraud history approval/rejection status_encoded']
+Y = df_with_anomalies_normalized['Fraud history approval/rejection status_encoded']
 
 # Debugging: Print the shapes of X and Y
 print("Shape of X (features):", X.shape)
@@ -60,3 +62,13 @@ print("Test set shape:", X_test.shape, Y_test.shape)
 
 # Train and evaluate the logistic regression model
 model = train_and_evaluate_logistic_regression(X_train, Y_train, X_val, Y_val, X_test, Y_test)
+
+# Perform SHAP analysis
+shap_values = perform_shap_analysis(model, X_train, X_test, feature_names=X.columns)
+
+
+# call the deep learning model
+from models.deep_learning_model import build_and_evaluate_deep_learning_model
+
+dl_model = build_and_evaluate_deep_learning_model(X_train, Y_train, X_val, Y_val, X_test, Y_test, epochs=20, batch_size=20)
+# Perform SHAP analysis for the deep learning model

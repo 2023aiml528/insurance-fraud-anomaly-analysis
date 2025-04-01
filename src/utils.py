@@ -1,4 +1,5 @@
 from sklearn.model_selection import train_test_split
+import shap
 def load_data(filepath):
     import pandas as pd
     return pd.read_csv(filepath)
@@ -43,7 +44,7 @@ def normalize_data(df):
     import pandas as pd  # Add this import
     from sklearn.preprocessing import MinMaxScaler
     scaler = MinMaxScaler()
-    return pd.DataFrame(scaler.fit_transform(df), columns=df.columns)
+    return pd.DataFrame(scaler.fit_transform(df.select_dtypes(include=['number'])), columns=df.select_dtypes(include=['number']).columns )
 
 def split_data(X, Y, train_size, val_size, test_size, random_state=42):
     """
@@ -75,3 +76,32 @@ def split_data(X, Y, train_size, val_size, test_size, random_state=42):
     X_val, X_test, Y_val, Y_test = train_test_split(X_temp, Y_temp, train_size=val_size, random_state=random_state, stratify=Y_temp)
 
     return X_train, X_val, X_test, Y_train, Y_val, Y_test
+
+
+
+def perform_shap_analysis(model, X_train, X_test, feature_names):
+    """
+    Perform SHAP analysis to explain the predictions of a machine learning model.
+
+    Parameters:
+    - model: Trained machine learning model (e.g., XGBoost, LightGBM, etc.)
+    - X_train: Training dataset used to fit the SHAP explainer.
+    - X_test: Test dataset for which SHAP values will be computed.
+    - feature_names: List of feature names for better visualization.
+
+    Returns:
+    - shap_values: Computed SHAP values for the test dataset.
+    """
+    # Initialize the SHAP explainer
+    explainer = shap.Explainer(model, X_train)
+
+    # Compute SHAP values for the test dataset
+    shap_values = explainer(X_test)
+
+    # Summary plot of SHAP values
+    shap.summary_plot(shap_values, X_test, feature_names=feature_names)
+
+    # Bar plot of mean absolute SHAP values
+    shap.summary_plot(shap_values, X_test, feature_names=feature_names, plot_type="bar")
+
+    return shap_values    
