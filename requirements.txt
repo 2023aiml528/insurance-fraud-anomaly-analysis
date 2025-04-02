@@ -9,3 +9,4 @@ shap
 tensorflow
 PyYAML
 joblib
+fastapi

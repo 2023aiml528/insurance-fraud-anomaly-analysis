@@ -4,7 +4,22 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, LabelEncoder
 import yaml
 import logging
+# Dynamically handle imports based on execution context
+try:
+    # When running from `main.py`
+    from utils import load_data, encode_categorical, normalize_data, split_data
+    from anomaly_detection import AnomalyDetector
+except ModuleNotFoundError:
+    # When running from FastAPI (e.g., `uvicorn`)
+    from src.utils import load_data, encode_categorical, normalize_data, split_data
+    from src.anomaly_detection import AnomalyDetector
 
+# Add the src directory to PYTHONPATH
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+
+# Add the src directory to PYTHONPATH
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 def load_data(filepath):
     df = pd.read_csv(filepath)
@@ -12,6 +27,7 @@ def load_data(filepath):
 
 def preprocess_data(df):
 
+    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
     # Load the configuration file
     config_path = os.path.join(os.path.dirname(__file__), "../config/config.yaml")
     with open(config_path, "r") as file:
@@ -29,11 +45,11 @@ def preprocess_data(df):
     date_columns = config["columns"]["date_columns"]
     glove_path = config["glove_path"]["glove_path"]
 
-    logging.info("Nominal columns:", nominal_columns) 
-    logging.info("Date format:", date_format)
-    logging.info("Columns to encode:", columns_to_encode)
-    logging.info("Date columns:", date_columns)
-    logging.info("GloVe path:", glove_path)
+    logging.info(f"Nominal columns:, {nominal_columns}") 
+    logging.info(f"Date format:, {date_format}")
+    logging.info(f"Columns to encode:, {columns_to_encode}")
+    logging.info(f"Date columns:, {date_columns}")
+    logging.info(f"GloVe path:, {glove_path}")
 
 
     # Convert object columns to category
@@ -57,9 +73,24 @@ def preprocess_data(df):
     # Convert date columns to numeric
     df = convert_date_columns_to_numeric(df, date_columns, date_format)
 
+    # Initialize the anomaly detector
+    anomaly_detector = AnomalyDetector(contamination=0.1)
 
+    # Fit the model and detect anomalies
+    #anomaly_detector.fit(data)
+    df_with_anomalies = anomaly_detector.detect_anomalies(df)
+
+
+    # logging.info the detected anomalies
+    logging.info("Detected anomalies:")
+    logging.info(df_with_anomalies[df_with_anomalies['any_anomaly'] == 1].head())
      
-    return df
+
+    # Normalize the data
+    df_with_anomalies_normalized = normalize_data(df_with_anomalies) 
+
+
+    return df_with_anomalies
 
 
 def display_categorical_features(df):
@@ -83,7 +114,7 @@ def convert_object_columns_to_category(df, categorical_features, date_format=Non
     # Select only 'object' type columns
     features = df.select_dtypes(include=['object'])
 
-    logging.info("Inside convert_object_columns_to_category features:\n", features.columns)
+    logging.info(f"Inside convert_object_columns_to_category categorical_features:\n{categorical_features}")
     for col in features.columns:
         try:
             # Try converting to datetime to identify date columns
@@ -95,13 +126,13 @@ def convert_object_columns_to_category(df, categorical_features, date_format=Non
         except (ValueError, TypeError):
             continue
 
-    logging.info("Inside convert_object_columns_to_category categorical_features:\n", categorical_features)
-
+    logging.info(f"Inside convert_object_columns_to_category categorical_features:\n{categorical_features}")
+    
     # Exclude identified date columns from the conversion process
     non_date_features = [col for col in features.columns if col not in categorical_features]
 
-    logging.info("Inside convert_object_columns_to_category non_date_features:\n", non_date_features)
-
+    logging.info(f"Inside convert_object_columns_to_category categorical_features:\n{non_date_features}")
+    
     # Convert non-date 'object' columns to 'category' type
     for col in non_date_features:
         df[col] = df[col].astype('category')
@@ -263,3 +294,56 @@ def convert_date_columns_to_numeric(df, date_columns, date_format=None):
             logging.info(f"Warning: Column '{column}' not found in the DataFrame.")
 
     return df
+
+
+def preprocess_raw_input(raw_input):
+    import os
+    import yaml
+
+    # Load the configuration file
+    config_path = os.path.join(os.path.dirname(__file__), "../config/config.yaml")
+    with open(config_path, "r") as file:
+        config = yaml.safe_load(file)
+
+    # Extract configuration values
+    nominal_columns = config["columns"]["nominal"]
+    date_format = config["columns"]["date_format"]
+    columns_to_encode = config["columns"]["labeled"]
+    date_columns = config["columns"]["date_columns"]
+    glove_path = config["glove_path"]["glove_path"]
+
+    logging.info("Nominal columns: %s", nominal_columns)
+    logging.info("Date format: %s", date_format)
+    logging.info("Columns to encode: %s", columns_to_encode)
+    logging.info("Date columns: %s", date_columns)
+    logging.info("GloVe path: %s", glove_path)
+
+    # Ensure raw_input is a flat dictionary
+    if isinstance(raw_input, dict):
+        # Flatten nested dictionaries if necessary
+        raw_input = {k: v for k, v in raw_input.items()}
+    else:
+        raise ValueError("Input data must be a dictionary.")
+
+    # Convert raw input to DataFrame
+    df_raw = pd.DataFrame([raw_input])
+
+    # Handle missing values
+    df_raw.fillna(method='ffill', inplace=True)
+
+    # Convert object columns to categories
+    df_raw = convert_object_columns_to_category(df_raw, categorical_features=[], date_format=date_format)
+
+    # Encode selected columns
+    df_raw = encode_selected_columns(df_raw, columns_to_encode)
+
+    # Convert nominal columns to numeric using GloVe embeddings
+    df_raw = convert_nominal_to_numeric_with_glove_single_value(df_raw, nominal_columns, glove_path, aggregation='magnitude')
+
+    # Convert date columns to numeric
+    df_raw = convert_date_columns_to_numeric(df_raw, date_columns, date_format=date_format)
+
+    # Normalize numeric columns
+    df_raw = normalize_data(df_raw)
+
+    return df_raw

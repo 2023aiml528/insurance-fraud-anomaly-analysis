@@ -1,106 +1,129 @@
 import sys
 import os
+from joblib import dump, load
 from utils import load_data, encode_categorical, normalize_data, split_data
-from anomaly_detection import AnomalyDetector
-from data_preprocessing import load_data, preprocess_data
+from data_preprocessing import preprocess_data
 from models.logistic_regression_model import train_and_evaluate_logistic_regression
 from utils import perform_shap_analysis
 import yaml
 from logging_config import setup_logging
 import logging
+import requests
+
+# Define the path to the model file
+model_path = "models/logistic_regression_model.pkl"
+
+# Function to call the API
+def call_api_with_raw_input():
+    # Define the API endpoint
+    api_url = "http://127.0.0.1:8000/predict"
+
+    # Example raw input data
+    raw_input = {
+        "total_amount": 5000.0,
+        "hospital_bills": 2000.0,
+        "claim_limits": 10000.0,
+        "premium_amount": 1500.0,
+        "treatment_expenses": 3000.0,
+        "covered": "Yes",
+        "claim_documents_submitted": "Yes",
+        "fraud_history_approval_rejection_status": "No",
+        "benefits": "Basic",
+        "billing_frequency": "Monthly",
+        "policy_type": "Individual",
+        "provider_id": "12345",
+        "patient_id": "67890",
+        "doctor": "Dr. Smith",
+        "hospital": "City Hospital",
+        "contact_details": "123-456-7890",
+        "diagnosis_report": "Mild fever",
+        "discharge_summary": "Recovered",
+        "prescriptions_and_bills": "Paracetamol",
+        "insurance_company_name": "ABC Insurance",
+        "policy_number": "POL123",
+        "email": "example@example.com",
+        "address": "123 Main St",
+        "phone_number": "1234567890",
+        "policy_name": "Health Plus",
+        "procedure_codes_cpt_code": "CPT123",
+        "network_partners": "Partner1",
+        "bank_account": "123456789",
+        "policy_holder_name": "John Doe",
+        "start_date": "01-01-2023",
+        "end_date": "31-12-2023",
+        "renewal_date": "01-01-2024",
+        "hospitalized_date": "15-01-2023"
+    }
+
+    # Log the API call
+    logging.info("Sending POST request to API...")
+    try:
+        # Send a POST request to the API
+        response = requests.post(api_url, json=raw_input)
+
+        # Process the response
+        if response.status_code == 200:
+            logging.info("API Response: %s", response.json())
+        else:
+            logging.error("API Error: %s", response.text)
+    except Exception as e:
+        logging.error("Error while calling API: %s", str(e))
 
 
+# Main script
+if __name__ == "__main__":
+    # Load the configuration file
+    config_path = os.path.join(os.path.dirname(__file__), "../config/config.yaml")
+    with open(config_path, "r") as file:
+        config = yaml.safe_load(file)
 
-# Load the configuration file
-config_path = os.path.join(os.path.dirname(__file__), "../config/config.yaml")
-with open(config_path, "r") as file:
-    config = yaml.safe_load(file)
+    # Set up logging
+    setup_logging(config_path)
+    logging.info("Logging is configured successfully.")
 
-    
-# Set up logging
-setup_logging(config_path)
+    # Access the dataset path and columns
+    dataset_path = config["dataset"]["path"]
+    target_column = config["columns"]["target"]
+    nominal_columns = config["columns"]["nominal"]
 
-# Example log message
-logging.info("Logging is configured successfully.")
+    test_size = config["dataset"]["test_size"]
+    validation_size = config["dataset"]["validation_size"]
+    train_size = config["dataset"]["train_size"]
 
-# Access the dataset path and columns
-dataset_path = config["dataset"]["path"]
-target_column = config["columns"]["target"]
-nominal_columns = config["columns"]["nominal"]
+    logging.info(f"Dataset Path: {dataset_path}")
+    logging.info(f"Target Column: {target_column}")
+    logging.info(f"Nominal Columns: {nominal_columns}")
 
-test_size = config["dataset"]["test_size"]
-validation_size = config["dataset"]["validation_size"]
-train_size = config["dataset"]["train_size"]
+    # Check if the model file exists
+    if os.path.exists(model_path):
+        logging.info(f"Model file found at {model_path}. Loading the model...")
+        model = load(model_path)
+    else:
+        logging.info(f"Model file not found at {model_path}. Training a new model...")
 
+        # Load the dataset
+        data = load_data(dataset_path)
 
-logging.info("Dataset Path:", dataset_path)
-logging.info("Target Column:", target_column)
-logging.info("Nominal Columns:", nominal_columns)
+        # Preprocess the data
+        data = preprocess_data(data)
+        logging.info(f"Post preprocess_data head:\n{data.head().T}")
 
-logging.info(sys.executable)
+        # Prepare X with only numeric fields
+        X = data.select_dtypes(include=['number'])
+        logging.info(f"X Columns: {X.columns}")
 
-# Specify the path to your dataset
-#dataset_path = r'data/updated_health_insurance_data_Benefits_with_discharge_summary.csv'
+        Y = data[target_column]
 
-# Load the dataset
-data = load_data(dataset_path)
+        # Split the data into training, validation, and test sets
+        X_train, X_val, X_test, Y_train, Y_val, Y_test = split_data(X, Y, train_size, validation_size, test_size)
 
-# Preprocess the data
-data = preprocess_data(data)
+        # Train and evaluate the logistic regression model
+        model = train_and_evaluate_logistic_regression(X_train, Y_train, X_val, Y_val, X_test, Y_test)
 
-logging.info("Post preprocess_data head", data.head().T)
+        # Save the trained model
+        os.makedirs("models", exist_ok=True)  # Ensure the models directory exists
+        dump(model, model_path)
+        logging.info(f"Model saved to {model_path}.")
 
-logging.info("Post preprocess_data \n", data.info())
-
-
-
-
-# Initialize the anomaly detector
-anomaly_detector = AnomalyDetector(contamination=0.1)
-
-# Fit the model and detect anomalies
-#anomaly_detector.fit(data)
-df_with_anomalies = anomaly_detector.detect_anomalies(data)
-
-# logging.info the detected anomalies
-logging.info("Detected anomalies:")
-logging.info(df_with_anomalies[df_with_anomalies['any_anomaly'] == 1].head())
-
-# Normalize the data
-df_with_anomalies_normalized = normalize_data(df_with_anomalies)
-
-# Prepare X with only numeric fields
-X = df_with_anomalies_normalized.select_dtypes(include=['number'])
-
-Y = df_with_anomalies_normalized['Fraud history approval/rejection status_encoded']
-
-# Debugging: logging.info the shapes of X and Y
-logging.info("Shape of X (features):", X.shape)
-logging.info("Shape of Y (target):", Y.shape)
-
-# Debugging: Check the first few rows of X and Y
-logging.info("First few rows of X:")
-logging.info(X.head())
-logging.info("First few values of Y:")
-logging.info(Y[:5])
-
-# Split the data into training, validation, and test sets
-X_train, X_val, X_test, Y_train, Y_val, Y_test = split_data(X, Y, train_size, validation_size, test_size)
-
-# Debugging: logging.info the shapes of the splits
-logging.info("Training set shape:", X_train.shape, Y_train.shape)
-logging.info("Validation set shape:", X_val.shape, Y_val.shape)
-logging.info("Test set shape:", X_test.shape, Y_test.shape)
-
-# Train and evaluate the logistic regression model
-model = train_and_evaluate_logistic_regression(X_train, Y_train, X_val, Y_val, X_test, Y_test)
-
-# Perform SHAP analysis
-shap_values = perform_shap_analysis(model, X_train, X_test, feature_names=X.columns)
-
-
-# call the deep learning model
-from models.deep_learning_model import build_and_evaluate_deep_learning_model
-
-dl_model = build_and_evaluate_deep_learning_model(X_train, Y_train, X_val, Y_val, X_test, Y_test, epochs=20, batch_size=20)
-# Perform SHAP analysis for the deep learning model
+    # Call the API
+    call_api_with_raw_input()

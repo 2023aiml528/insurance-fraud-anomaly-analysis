@@ -2,6 +2,8 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report
 from sklearn.metrics import confusion_matrix
+from joblib import dump
+import logging
 
 def train_and_evaluate_logistic_regression(X_train, Y_train, X_val, Y_val, X_test, Y_test):
     """
@@ -24,6 +26,10 @@ def train_and_evaluate_logistic_regression(X_train, Y_train, X_val, Y_val, X_tes
     # Train the model on the training set
     model.fit(X_train, Y_train)
 
+    # Save the trained model
+    dump(model, "src/models/logistic_regression_model.pkl")
+    logging.info("Model saved successfully!")
+
     # Validate the model on the validation set
     Y_val_pred = model.predict(X_val)
     val_accuracy = accuracy_score(Y_val, Y_val_pred)
@@ -31,13 +37,13 @@ def train_and_evaluate_logistic_regression(X_train, Y_train, X_val, Y_val, X_tes
     val_recall = recall_score(Y_val, Y_val_pred)
     val_f1 = f1_score(Y_val, Y_val_pred)
 
-    print("Validation Set Evaluation:")
-    print(f"Accuracy: {val_accuracy:.2f}")
-    print(f"Precision: {val_precision:.2f}")
-    print(f"Recall: {val_recall:.2f}")
-    print(f"F1-Score: {val_f1:.2f}")
-    print("\nClassification Report (Validation):")
-    print(classification_report(Y_val, Y_val_pred))
+    logging.info("Validation Set Evaluation:")
+    logging.info(f"Accuracy: {val_accuracy:.2f}")
+    logging.info(f"Precision: {val_precision:.2f}")
+    logging.info(f"Recall: {val_recall:.2f}")
+    logging.info(f"F1-Score: {val_f1:.2f}")
+    logging.info("\nClassification Report (Validation):")
+    logging.info(classification_report(Y_val, Y_val_pred))
 
     # Evaluate the model on the test set
     Y_test_pred = model.predict(X_test)
@@ -46,17 +52,17 @@ def train_and_evaluate_logistic_regression(X_train, Y_train, X_val, Y_val, X_tes
     test_recall = recall_score(Y_test, Y_test_pred)
     test_f1 = f1_score(Y_test, Y_test_pred)
 
-    print("\nTest Set Evaluation:")
-    print(f"Accuracy: {test_accuracy:.2f}")
-    print(f"Precision: {test_precision:.2f}")
-    print(f"Recall: {test_recall:.2f}")
-    print(f"F1-Score: {test_f1:.2f}")
-    print("\nClassification Report (Test):")
-    print(classification_report(Y_test, Y_test_pred))
+    logging.info("\nTest Set Evaluation:")
+    logging.info(f"Accuracy: {test_accuracy:.2f}")
+    logging.info(f"Precision: {test_precision:.2f}")
+    logging.info(f"Recall: {test_recall:.2f}")
+    logging.info(f"F1-Score: {test_f1:.2f}")
+    logging.info("\nClassification Report (Test):")
+    logging.info(classification_report(Y_test, Y_test_pred))
 
     # Confusion Matrix
-    print("\nConfusion Matrix (Test):")
-    print(confusion_matrix(Y_test, Y_test_pred))
+    logging.info("\nConfusion Matrix (Test):")
+    logging.info(confusion_matrix(Y_test, Y_test_pred))
 
     return model
 

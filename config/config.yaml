@@ -42,7 +42,7 @@ columns:
     - "End Date"
     - "Renewal Date"
     - "Hospitalized Date"
-  date_format: "%Y-%m-%d"
+  date_format: "%d-%m-%Y"
 
 logging:
   level: "INFO"  # Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
