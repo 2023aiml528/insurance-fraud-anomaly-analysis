@@ -5,3 +5,7 @@ scikit-learn
 seaborn
 jupyter
 notebook
+shap
+tensorflow
+PyYAML
+joblib
