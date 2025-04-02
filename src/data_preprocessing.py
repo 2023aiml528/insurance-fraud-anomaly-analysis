@@ -1,5 +1,9 @@
+import sys
+import os
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, LabelEncoder
+import yaml
+import logging
 
 
 def load_data(filepath):
@@ -7,14 +11,30 @@ def load_data(filepath):
     return df
 
 def preprocess_data(df):
+
+    # Load the configuration file
+    config_path = os.path.join(os.path.dirname(__file__), "../config/config.yaml")
+    with open(config_path, "r") as file:
+        config = yaml.safe_load(file)
+
     # Handle missing values
     df.ffill(inplace=True)
     
     # Display categorical features
     categorical_features = []
 
-    # Specify the date format (e.g., 'dd-mm-yyyy')
-    date_format = '%d-%m-%Y'
+    nominal_columns = config["columns"]["nominal"]
+    date_format = config["columns"]["date_format"]
+    columns_to_encode = config["columns"]["labeled"]
+    date_columns = config["columns"]["date_columns"]
+    glove_path = config["glove_path"]["glove_path"]
+
+    logging.info("Nominal columns:", nominal_columns) 
+    logging.info("Date format:", date_format)
+    logging.info("Columns to encode:", columns_to_encode)
+    logging.info("Date columns:", date_columns)
+    logging.info("GloVe path:", glove_path)
+
 
     # Convert object columns to category
     df = convert_object_columns_to_category(df, categorical_features, date_format)
@@ -22,24 +42,18 @@ def preprocess_data(df):
 
     # Encode selected categorical columns
     categorical_columns = df.select_dtypes(include=['category']).columns.tolist()
-    # List of columns to encode
-    columns_to_encode = ['Covered','Claim Documents Submitted','Fraud history approval/rejection status', 'Benefits','Billing frequency','Policy type']  # Replace with your selected column names
 
 
     if columns_to_encode:
         df =encode_selected_columns(df, columns_to_encode)
     else:
-        print("No categorical columns to encode.")
+        logging.info("No categorical columns to encode.")
 
 
-    # Convert nominal fields to numeric using GloVe embeddings
-    columns_to_convert = ['Provider ID', 'Patient ID', 'Doctor', 'Hospital','Contact Details', 'Diagnosis Report','Discharge Summary','Prescriptions and Bills','Insurance Company Name','Policy Number', 'Email','Address','Phone Number','Policy Name','Procedure codes/CPT Code','Network Partners','Bank Account','Policy Holder Name']
-    glove_path = r'data//glove/glove.6B.50d.txt'  # Update with the actual path to GloVe embeddings
-    df = convert_nominal_to_numeric_with_glove_single_value(df, columns_to_convert, glove_path, aggregation='magnitude')
+    #glove_path = r'data//glove/glove.6B.50d.txt'  # Update with the actual path to GloVe embeddings
+    df = convert_nominal_to_numeric_with_glove_single_value(df, nominal_columns, glove_path, aggregation='magnitude')
 
     
-    # List of date columns to convert
-    date_columns = ['Start Date', 'End Date', 'Renewal Date', 'Hospitalized Date']
     # Convert date columns to numeric
     df = convert_date_columns_to_numeric(df, date_columns, date_format)
 
@@ -50,8 +64,8 @@ def preprocess_data(df):
 
 def display_categorical_features(df):
     categorical_columns = df.select_dtypes(include=['object']).columns.tolist()
-    print("Categorical Features:")
-    print(categorical_columns)
+    logging.info("Categorical Features:")
+    logging.info(categorical_columns)
     return categorical_columns
 
 def convert_object_columns_to_category(df, categorical_features, date_format=None):
@@ -69,7 +83,7 @@ def convert_object_columns_to_category(df, categorical_features, date_format=Non
     # Select only 'object' type columns
     features = df.select_dtypes(include=['object'])
 
-    print("Inside convert_object_columns_to_category features:\n", features.columns)
+    logging.info("Inside convert_object_columns_to_category features:\n", features.columns)
     for col in features.columns:
         try:
             # Try converting to datetime to identify date columns
@@ -81,19 +95,19 @@ def convert_object_columns_to_category(df, categorical_features, date_format=Non
         except (ValueError, TypeError):
             continue
 
-    print("Inside convert_object_columns_to_category categorical_features:\n", categorical_features)
+    logging.info("Inside convert_object_columns_to_category categorical_features:\n", categorical_features)
 
     # Exclude identified date columns from the conversion process
     non_date_features = [col for col in features.columns if col not in categorical_features]
 
-    print("Inside convert_object_columns_to_category non_date_features:\n", non_date_features)
+    logging.info("Inside convert_object_columns_to_category non_date_features:\n", non_date_features)
 
     # Convert non-date 'object' columns to 'category' type
     for col in non_date_features:
         df[col] = df[col].astype('category')
 
     # Display the updated DataFrame information
-    print("Updated DataFrame info after converting 'object' columns to 'category':")
+    logging.info("Updated DataFrame info after converting 'object' columns to 'category':")
     df.info()
 
     return df
@@ -120,10 +134,10 @@ def encode_selected_columns(df, columns_to_encode):
         if column in df.columns:
             df[column + '_encoded'] = label_encoder.fit_transform(df[column])
         else:
-            print(f"Warning: Column '{column}' not found in the DataFrame.")
+            logging.info(f"Warning: Column '{column}' not found in the DataFrame.")
 
     # Display the updated DataFrame information
-    print("Updated DataFrame after label encoding:")
+    logging.info("Updated DataFrame after label encoding:")
     df.info()
 
     return df
@@ -141,7 +155,7 @@ def load_glove_embeddings(glove_path):
     Returns:
         dict: A dictionary where keys are words and values are their GloVe vectors.
     """
-    print("Loading GloVe embeddings...")
+    logging.info("Loading GloVe embeddings...")
     glove_embeddings = {}
     with open(glove_path, 'r', encoding='utf-8') as f:
         for line in f:
@@ -149,7 +163,7 @@ def load_glove_embeddings(glove_path):
             word = values[0]
             vector = np.array(values[1:], dtype='float32')
             glove_embeddings[word] = vector
-    print("GloVe embeddings loaded.")
+    logging.info("GloVe embeddings loaded.")
     return glove_embeddings
 
 def get_column_embeddings_single_value(df, column, glove_embeddings, aggregation='magnitude'):
@@ -167,7 +181,7 @@ def get_column_embeddings_single_value(df, column, glove_embeddings, aggregation
         pd.Series: A pandas Series containing the aggregated GloVe embedding value for each row.
     """
     if column not in df.columns:
-        print(f"Warning: Column '{column}' not found in the DataFrame.")
+        logging.info(f"Warning: Column '{column}' not found in the DataFrame.")
         return pd.Series([0] * len(df), index=df.index)
 
     numeric_values = []
@@ -244,8 +258,8 @@ def convert_date_columns_to_numeric(df, date_columns, date_format=None):
                 # Convert datetime to numeric (e.g., days since epoch)
                 df[column + '_numeric'] = (df[column] - pd.Timestamp("1970-01-01")) // pd.Timedelta('1d')
             except Exception as e:
-                print(f"Error converting column '{column}': {e}")
+                logging.info(f"Error converting column '{column}': {e}")
         else:
-            print(f"Warning: Column '{column}' not found in the DataFrame.")
+            logging.info(f"Warning: Column '{column}' not found in the DataFrame.")
 
     return df

@@ -1,5 +1,6 @@
 from sklearn.model_selection import train_test_split
 import shap
+import logging
 def load_data(filepath):
     import pandas as pd
     return pd.read_csv(filepath)
@@ -29,7 +30,7 @@ def encode_categorical(df, columns):
         >>> data = {'Category': ['A', 'B', 'A', 'C']}
         >>> df = pd.DataFrame(data)
         >>> encode_categorical(df, ['Category'])
-        >>> print(df)
+        >>> logging.info(df)
            Category
         0         0
         1         1

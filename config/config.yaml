@@ -1,0 +1,62 @@
+dataset:
+  path: "data/updated_health_insurance_data_Benefits_with_discharge_summary.csv"
+  test_size: 50
+  validation_size: 150
+  train_size: 800
+
+glove_path:
+  glove: "data/glove/glove.6B.50d.txt"
+  glove_dim: 50
+  glove_path: "data/glove/glove.6B.50d.txt"
+
+columns:
+  target: "Fraud history approval/rejection status_encoded"
+  nominal:
+    - "Provider ID"
+    - "Patient ID"
+    - "Doctor"
+    - "Hospital"
+    - "Contact Details"
+    - "Diagnosis Report"
+    - "Discharge Summary"
+    - "Prescriptions and Bills"
+    - "Insurance Company Name"
+    - "Policy Number"
+    - "Email"
+    - "Address"
+    - "Phone Number"
+    - "Policy Name"
+    - "Procedure codes/CPT Code"
+    - "Network Partners"
+    - "Bank Account"
+    - "Policy Holder Name"
+  labeled:
+    - "Covered"
+    - "Claim Documents Submitted"
+    - "Fraud history approval/rejection status"
+    - "Benefits"
+    - "Billing frequency"
+    - "Policy type"
+  date_columns:
+    - "Start Date"
+    - "End Date"
+    - "Renewal Date"
+    - "Hospitalized Date"
+  date_format: "%Y-%m-%d"
+
+logging:
+  level: "INFO"  # Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+  log_file: "logs/application.log"  # Path to the log file
+  format: "%(asctime)s - %(levelname)s - %(message)s"  # Log message format
+
+model:
+  type: "RandomForestClassifier"
+  params:
+    n_estimators: 100
+    max_depth: 10
+    random_state: 42
+
+training:
+  test_size: 0.2
+  random_state: 42
+  scoring: "accuracy"
