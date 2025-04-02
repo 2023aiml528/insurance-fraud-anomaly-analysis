@@ -3,7 +3,7 @@ def update_readme():
     project_structure = """
 ## Project Structure
 
-- **data/**: Contains the dataset and related documentation.
+- **data/**: Contains the dataset and related documentation. 
 - **notebooks/**: Contains Jupyter notebooks for analysis.
 - **src/**: Contains the source code for the project.
 - **tests/**: Contains unit tests for the project.
