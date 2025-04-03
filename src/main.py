@@ -1,17 +1,25 @@
 import sys
 import os
 from joblib import dump, load
-from utils import load_data, encode_categorical, normalize_data, split_data
+from utils import load_data, encode_categorical, normalize_data, split_data, save_feature_metadata
 from data_preprocessing import preprocess_data
 from models.logistic_regression_model import train_and_evaluate_logistic_regression
-from utils import perform_shap_analysis
+from models.deep_learning_model import build_and_evaluate_deep_learning_model
 import yaml
 from logging_config import setup_logging
 import logging
 import requests
+from tensorflow.keras.models import load_model
+from visualization  import perform_shap_analysis
+
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow INFO and WARNING messages
 
 # Define the path to the model file
 model_path = "models/logistic_regression_model.pkl"
+
+# Define the path to the DNN model file
+dnn_model_path = "models/deep_learning_model"
 
 # Function to call the API
 def call_api_with_raw_input():
@@ -63,11 +71,68 @@ def call_api_with_raw_input():
 
         # Process the response
         if response.status_code == 200:
-            logging.info("API Response: %s", response.json())
+            logging.info("Logictic Regression API Response: %s", response.json())
         else:
-            logging.error("API Error: %s", response.text)
+            logging.error("Logictic Regression API Error: %s", response.text)
     except Exception as e:
-        logging.error("Error while calling API: %s", str(e))
+        logging.error("Error while calling Logictic Regression API: %s", str(e))
+
+
+# Function to call the API
+def call_dnn_api_with_raw_input():
+    # Define the API endpoint
+    api_url = "http://127.0.0.1:8000//nn/predict"
+
+    # Example raw input data
+    raw_input = {
+        "total_amount": 5000.0,
+        "hospital_bills": 2000.0,
+        "claim_limits": 10000.0,
+        "premium_amount": 1500.0,
+        "treatment_expenses": 3000.0,
+        "covered": "Yes",
+        "claim_documents_submitted": "Yes",
+        "fraud_history_approval_rejection_status": "No",
+        "benefits": "Basic",
+        "billing_frequency": "Monthly",
+        "policy_type": "Individual",
+        "provider_id": "12345",
+        "patient_id": "67890",
+        "doctor": "Dr. Smith",
+        "hospital": "City Hospital",
+        "contact_details": "123-456-7890",
+        "diagnosis_report": "Mild fever",
+        "discharge_summary": "Recovered",
+        "prescriptions_and_bills": "Paracetamol",
+        "insurance_company_name": "ABC Insurance",
+        "policy_number": "POL123",
+        "email": "example@example.com",
+        "address": "123 Main St",
+        "phone_number": "1234567890",
+        "policy_name": "Health Plus",
+        "procedure_codes_cpt_code": "CPT123",
+        "network_partners": "Partner1",
+        "bank_account": "123456789",
+        "policy_holder_name": "John Doe",
+        "start_date": "01-01-2023",
+        "end_date": "31-12-2023",
+        "renewal_date": "01-01-2024",
+        "hospitalized_date": "15-01-2023"
+    }
+
+    # Log the API call
+    logging.info("Sending POST request to API...")
+    try:
+        # Send a POST request to the API
+        response = requests.post(api_url, json=raw_input)
+
+        # Process the response
+        if response.status_code == 200:
+            logging.info("DNN API Response: %s", response.json())
+        else:
+            logging.error("DNN API Error: %s", response.text)
+    except Exception as e:
+        logging.error("Error while calling DNN API: %s", str(e))
 
 
 # Main script
@@ -84,7 +149,8 @@ if __name__ == "__main__":
     # Access the dataset path and columns
     dataset_path = config["dataset"]["path"]
     target_column = config["columns"]["target"]
-    nominal_columns = config["columns"]["nominal"]
+    # Standardize column names: replace spaces with underscores and convert to lowercase
+    target_column = target_column.replace(" ", "_").lower()
 
     test_size = config["dataset"]["test_size"]
     validation_size = config["dataset"]["validation_size"]
@@ -92,12 +158,14 @@ if __name__ == "__main__":
 
     logging.info(f"Dataset Path: {dataset_path}")
     logging.info(f"Target Column: {target_column}")
-    logging.info(f"Nominal Columns: {nominal_columns}")
 
-    # Check if the model file exists
-    if os.path.exists(model_path):
+
+     # Check if the model file exists
+    if os.path.exists(model_path) and os.path.exists("models/deep_learning_model"):
         logging.info(f"Model file found at {model_path}. Loading the model...")
         model = load(model_path)
+        # Load the deep learning model
+        dnn_model = load_model("models/deep_learning_model")  # SavedModel format
     else:
         logging.info(f"Model file not found at {model_path}. Training a new model...")
 
@@ -110,20 +178,50 @@ if __name__ == "__main__":
 
         # Prepare X with only numeric fields
         X = data.select_dtypes(include=['number'])
+
+        # Prepare X with only numeric fields
+        X_dnn = data.select_dtypes(include=['number'])
+
         logging.info(f"X Columns: {X.columns}")
 
         Y = data[target_column]
 
         # Split the data into training, validation, and test sets
         X_train, X_val, X_test, Y_train, Y_val, Y_test = split_data(X, Y, train_size, validation_size, test_size)
+        # Perform SHAP analysis
+        X_train_numeric = X_train.select_dtypes(include=['number'])  # Ensure numeric columns
+    
+        # Save feature names and target feature
+        save_feature_metadata(X_train, target_column)
 
         # Train and evaluate the logistic regression model
         model = train_and_evaluate_logistic_regression(X_train, Y_train, X_val, Y_val, X_test, Y_test)
-
         # Save the trained model
         os.makedirs("models", exist_ok=True)  # Ensure the models directory exists
         dump(model, model_path)
-        logging.info(f"Model saved to {model_path}.")
 
+         # Perform SHAP analysis
+        perform_shap_analysis(model, X_train_numeric, model_name="Logistic Regression")
+
+
+        # Split the data into training, validation, and test sets
+        X_train, X_val, X_test, Y_train, Y_val, Y_test = split_data(X_dnn, Y, train_size, validation_size, test_size)
+
+        logging.info(f"DNN X_train", {X_train.shape})
+
+        # Perform SHAP analysis
+        X_train_numeric = X_train.select_dtypes(include=['number'])  # Ensure numeric columns
+        X_train_array = X_train_numeric.to_numpy()  # Convert to NumPy array for deep learning models
+        feature_names = X_train_numeric.columns.tolist()  # Extract feature names
+
+        # Train and evaluate the deep learning model
+        dnn_model, history = build_and_evaluate_deep_learning_model(X_train, Y_train, X_val, Y_val, X_test, Y_test)
+        dnn_model.save("models/deep_learning_model")  # SavedModel format
+        # Save the trained model        
+        logging.info(f"Deep Learning Model saved to models/deep_learning_model.h5.")
+
+        #perform_shap_analysis(dnn_model, X_train_array, model_name="Deep Learning Model", feature_names=feature_names)
     # Call the API
     call_api_with_raw_input()
+
+    call_dnn_api_with_raw_input()

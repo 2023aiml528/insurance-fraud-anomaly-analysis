@@ -4,6 +4,8 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, LabelEncoder
 import yaml
 import logging
+import math
+
 # Dynamically handle imports based on execution context
 try:
     # When running from `main.py`
@@ -27,6 +29,9 @@ def load_data(filepath):
 
 def preprocess_data(df):
 
+    # Standardize column names: replace spaces and slashes with underscores, and convert to lowercase
+    df.columns = df.columns.str.replace(' ', '_').str.replace('/', '_').str.lower()
+
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
     # Load the configuration file
     config_path = os.path.join(os.path.dirname(__file__), "../config/config.yaml")
@@ -39,10 +44,16 @@ def preprocess_data(df):
     # Display categorical features
     categorical_features = []
 
+    # Extract configuration values
     nominal_columns = config["columns"]["nominal"]
+    # Standardize column names: replace spaces with underscores and convert to lowercase
+    nominal_columns = [col.replace(' ', '_').replace('/', '_').lower() for col in nominal_columns]
     date_format = config["columns"]["date_format"]
     columns_to_encode = config["columns"]["labeled"]
+    columns_to_encode = [col.replace(' ', '_').replace('/', '_').lower() for col in columns_to_encode]
+
     date_columns = config["columns"]["date_columns"]
+    date_columns = [col.replace(' ', '_').replace('/', '_').lower() for col in date_columns]
     glove_path = config["glove_path"]["glove_path"]
 
     logging.info(f"Nominal columns:, {nominal_columns}") 
@@ -85,6 +96,7 @@ def preprocess_data(df):
     logging.info("Detected anomalies:")
     logging.info(df_with_anomalies[df_with_anomalies['any_anomaly'] == 1].head())
      
+    logging.info("final DF:\n", df_with_anomalies.info())    
 
     # Normalize the data
     df_with_anomalies_normalized = normalize_data(df_with_anomalies) 
@@ -261,8 +273,13 @@ def convert_nominal_to_numeric_with_glove_single_value(df, columns_to_convert, g
     # Process each column and add the new numeric column to the DataFrame
     for column in columns_to_convert:
         numeric_column = get_column_embeddings_single_value(df, column, glove_embeddings, aggregation)
-        df[f"{column}_glove"] = numeric_column  # Add the new column to the DataFrame
+        # Standardize the column name before adding the new GloVe column
+        standardized_column_name = column.replace(' ', '_').lower()
+        df[f"{standardized_column_name}_glove"] = numeric_column  # Add the new column to the DataFrame
 
+    # Display the updated DataFrame information
+    logging.info("Updated DataFrame after label encoding:")
+    df.info()
     return df
 
 def convert_date_columns_to_numeric(df, date_columns, date_format=None):
@@ -300,24 +317,6 @@ def preprocess_raw_input(raw_input):
     import os
     import yaml
 
-    # Load the configuration file
-    config_path = os.path.join(os.path.dirname(__file__), "../config/config.yaml")
-    with open(config_path, "r") as file:
-        config = yaml.safe_load(file)
-
-    # Extract configuration values
-    nominal_columns = config["columns"]["nominal"]
-    date_format = config["columns"]["date_format"]
-    columns_to_encode = config["columns"]["labeled"]
-    date_columns = config["columns"]["date_columns"]
-    glove_path = config["glove_path"]["glove_path"]
-
-    logging.info("Nominal columns: %s", nominal_columns)
-    logging.info("Date format: %s", date_format)
-    logging.info("Columns to encode: %s", columns_to_encode)
-    logging.info("Date columns: %s", date_columns)
-    logging.info("GloVe path: %s", glove_path)
-
     # Ensure raw_input is a flat dictionary
     if isinstance(raw_input, dict):
         # Flatten nested dictionaries if necessary
@@ -325,25 +324,19 @@ def preprocess_raw_input(raw_input):
     else:
         raise ValueError("Input data must be a dictionary.")
 
+    sanitize_input(raw_input)
+
     # Convert raw input to DataFrame
     df_raw = pd.DataFrame([raw_input])
 
-    # Handle missing values
-    df_raw.fillna(method='ffill', inplace=True)
-
-    # Convert object columns to categories
-    df_raw = convert_object_columns_to_category(df_raw, categorical_features=[], date_format=date_format)
-
-    # Encode selected columns
-    df_raw = encode_selected_columns(df_raw, columns_to_encode)
-
-    # Convert nominal columns to numeric using GloVe embeddings
-    df_raw = convert_nominal_to_numeric_with_glove_single_value(df_raw, nominal_columns, glove_path, aggregation='magnitude')
-
-    # Convert date columns to numeric
-    df_raw = convert_date_columns_to_numeric(df_raw, date_columns, date_format=date_format)
-
-    # Normalize numeric columns
-    df_raw = normalize_data(df_raw)
-
+    df_raw = preprocess_data(df_raw)
+    df_raw = df_raw.select_dtypes(include=['number'])
+    logging.info(f"Processed DataFrame:\n{df_raw.head().T}")
     return df_raw
+
+# Replace invalid float values in the raw_input dictionary
+def sanitize_input(data):
+    for key, value in data.items():
+        if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
+            logging.warning(f"Replacing invalid float value for key '{key}': {value}")
+            data[key] = 0  # Replace with a default value

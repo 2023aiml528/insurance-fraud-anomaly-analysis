@@ -1,6 +1,9 @@
 from sklearn.model_selection import train_test_split
 import shap
 import logging
+import sys
+import os
+
 def load_data(filepath):
     import pandas as pd
     return pd.read_csv(filepath)
@@ -79,30 +82,27 @@ def split_data(X, Y, train_size, val_size, test_size, random_state=42):
     return X_train, X_val, X_test, Y_train, Y_val, Y_test
 
 
-
-def perform_shap_analysis(model, X_train, X_test, feature_names):
+def save_feature_metadata(X_train, target_feature, metadata_path="models/feature_metadata.txt"):
     """
-    Perform SHAP analysis to explain the predictions of a machine learning model.
+    Save feature names and target feature to a file.
 
     Parameters:
-    - model: Trained machine learning model (e.g., XGBoost, LightGBM, etc.)
-    - X_train: Training dataset used to fit the SHAP explainer.
-    - X_test: Test dataset for which SHAP values will be computed.
-    - feature_names: List of feature names for better visualization.
-
-    Returns:
-    - shap_values: Computed SHAP values for the test dataset.
+        X_train (pd.DataFrame): Training data containing feature columns.
+        target_feature (str): Name of the target feature.
+        metadata_path (str): Path to save the metadata file.
     """
-    # Initialize the SHAP explainer
-    explainer = shap.Explainer(model, X_train)
+    # Extract feature names
+    feature_names = X_train.columns.tolist()
 
-    # Compute SHAP values for the test dataset
-    shap_values = explainer(X_test)
+    # Ensure the directory exists
+    os.makedirs(os.path.dirname(metadata_path), exist_ok=True)
 
-    # Summary plot of SHAP values
-    shap.summary_plot(shap_values, X_test, feature_names=feature_names)
+    # Save feature names and target feature to a file
+    with open(metadata_path, "w") as f:
+        f.write("Features:\n")
+        for feature in feature_names:
+            f.write(f"{feature}\n")
+        f.write("\nTarget:\n")
+        f.write(target_feature)
 
-    # Bar plot of mean absolute SHAP values
-    shap.summary_plot(shap_values, X_test, feature_names=feature_names, plot_type="bar")
-
-    return shap_values    
+    logging.info(f"Feature names and target feature saved to {metadata_path}.")

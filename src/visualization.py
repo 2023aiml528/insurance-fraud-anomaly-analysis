@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import shap
+import logging
+import pandas as pd
 
 def plot_anomaly_percentages(anomaly_percentages):
     plt.figure(figsize=(10, 6))
@@ -11,29 +13,33 @@ def plot_anomaly_percentages(anomaly_percentages):
     plt.tight_layout()
     plt.show()
 
-def perform_shap_analysis(model, X_train, X_test, feature_names):
-    """
-    Perform SHAP analysis to explain the predictions of a machine learning model.
+import shap
 
-    Parameters:
-    - model: Trained machine learning model (e.g., XGBoost, LightGBM, etc.)
-    - X_train: Training dataset used to fit the SHAP explainer.
-    - X_test: Test dataset for which SHAP values will be computed.
-    - feature_names: List of feature names for better visualization.
+def perform_shap_analysis(model, X_train, model_name="Model", feature_names=None):
+    logging.info(f"Performing SHAP analysis for {model_name}...")
+    try:
+        # If X_train is a NumPy array, convert it to a DataFrame with column names
+        if isinstance(X_train, pd.DataFrame):
+            data_for_shap = X_train
+        else:
+            if feature_names is None:
+                raise ValueError("Feature names must be provided if X_train is a NumPy array.")
+            data_for_shap = pd.DataFrame(X_train, columns=feature_names)
 
-    Returns:
-    - shap_values: Computed SHAP values for the test dataset.
-    """
-    # Initialize the SHAP explainer
-    explainer = shap.Explainer(model, X_train)
+        # Create a SHAP explainer
+        explainer = shap.Explainer(model, data_for_shap)
 
-    # Compute SHAP values for the test dataset
-    shap_values = explainer(X_test)
+        # Calculate SHAP values
+        shap_values = explainer(data_for_shap)
 
-    # Summary plot of SHAP values
-    shap.summary_plot(shap_values, X_test, feature_names=feature_names)
+        # Generate a force plot and save it as an HTML file
+        force_plot = shap.plots.force(shap_values[0])  # Visualize the first prediction
+        shap.save_html(f"logs/{model_name}_shap_force.html", force_plot)
+        logging.info(f"SHAP force plot saved for {model_name}.")
 
-    # Bar plot of mean absolute SHAP values
-    shap.summary_plot(shap_values, X_test, feature_names=feature_names, plot_type="bar")
-
-    return shap_values    
+        # Generate a summary plot
+        shap.summary_plot(shap_values, data_for_shap, show=False)
+        plt.savefig(f"logs/{model_name}_shap_summary.png")
+        logging.info(f"SHAP summary plot saved for {model_name}.")
+    except Exception as e:
+        logging.error(f"Error during SHAP analysis for {model_name}: {str(e)}")

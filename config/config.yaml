@@ -10,7 +10,7 @@ glove_path:
   glove_path: "data/glove/glove.6B.50d.txt"
 
 columns:
-  target: "Fraud history approval/rejection status_encoded"
+  target: "fraud_history_approval_rejection_status_encoded"
   nominal:
     - "Provider ID"
     - "Patient ID"
@@ -47,7 +47,7 @@ columns:
 logging:
   level: "INFO"  # Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
   log_file: "logs/application.log"  # Path to the log file
-  format: "%(asctime)s - %(levelname)s - %(message)s"  # Log message format
+  format: "%(asctime)s - %(levelname)s - %(filename)s - %(message)s"  # Log message format
 
 model:
   type: "RandomForestClassifier"

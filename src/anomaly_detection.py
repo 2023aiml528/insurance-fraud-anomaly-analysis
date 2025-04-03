@@ -23,32 +23,32 @@ class AnomalyDetector:
         #data['model_based_anomaly'] = (predictions == -1).astype(int)
 
         # Rule 3: Policy Dates anomaly (Start Date after End Date)
-        policy_date_anomalies = data[data['Start Date'] > data['End Date']].index.tolist()
+        policy_date_anomalies = data[data['start_date'] > data['end_date']].index.tolist()
         data['policy_date_anomaly'] = 0
         data.loc[policy_date_anomalies, 'policy_date_anomaly'] = 1
 
         # Step 2: Rule-based anomalies
         # Rule 1: Hospitalized Date outside Start Date and End Date
         hospitalized_date_anomalies = data[
-            (data['Hospitalized Date'] < data['Start Date']) | 
-            (data['Hospitalized Date'] > data['End Date'])
+            (data['hospitalized_date'] < data['start_date']) | 
+            (data['hospitalized_date'] > data['end_date'])
         ].index.tolist()
         data['hospitalized_date_anomaly'] = 0
         data.loc[hospitalized_date_anomalies, 'hospitalized_date_anomaly'] = 1
 
         # Rule 2: Anomaly detection for Claim Limit lower than Total Amount
-        claim_limit_lower_than_total_amount_anomalies = data[data['Claim limits'] < data['Total amount']].index.tolist()
+        claim_limit_lower_than_total_amount_anomalies = data[data['claim_limits'] < data['total_amount']].index.tolist()
         data['claim_limit_lower_than_total_amount_anomaly'] = 0
         data.loc[claim_limit_lower_than_total_amount_anomalies, 'claim_limit_lower_than_total_amount_anomaly'] = 1
 
         # Rule 3: Policy Dates anomaly (Start Date after End Date)
         # Document submitted flag (binary column)
-        document_submitted_anomalies = data[(data['Claim Documents Submitted'] == 'No') & (data['Fraud history approval/rejection status'] == 'Approved')].index.tolist()
+        document_submitted_anomalies = data[(data['claim_documents_submitted'] == 'No') & (data['fraud_history_approval_rejection_status'] == 'Approved')].index.tolist()
         data['document_submitted_anomaly'] = 0
         data.loc[document_submitted_anomalies, 'document_submitted_anomaly'] = 1
 
         # Rule 4: Fraud History anomaly (missing or invalid values)
-        covered_anomalies = data[(data['Covered'] == 'No') & (data['Fraud history approval/rejection status'] == 'Approved')].index.tolist()
+        covered_anomalies = data[(data['covered'] == 'No') & (data['fraud_history_approval_rejection_status'] == 'Approved')].index.tolist()
         data['covered_anomaly'] = 0
         data.loc[covered_anomalies, 'covered_anomaly'] = 1
 
@@ -73,8 +73,8 @@ class AnomalyDetector:
         # Load the mapping from the JSON file
         with open(path) as f:
             health_insurance_plans_benefits_mapping = json.load(f)
-        policy_name = row['Policy Name']
-        benefits = row['Benefits'].split(';')
+        policy_name = row['policy_name']
+        benefits = row['benefits'].split(';')
         
         valid_benefits = health_insurance_plans_benefits_mapping.get(policy_name, [])
         
