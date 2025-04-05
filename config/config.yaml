@@ -44,6 +44,11 @@ columns:
     - "Hospitalized Date"
   date_format: "%d-%m-%Y"
 
+lr_model_path:  "models/logistic_regression_model.pkl"
+dnn_model_path:  "models/deep_learning_model"
+
+dnn_scaler_path: "models/scaler.pkl"
+
 logging:
   level: "INFO"  # Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
   log_file: "logs/application.log"  # Path to the log file

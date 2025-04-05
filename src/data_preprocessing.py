@@ -19,10 +19,6 @@ except ModuleNotFoundError:
 # Add the src directory to PYTHONPATH
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-
-# Add the src directory to PYTHONPATH
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 def load_data(filepath):
     df = pd.read_csv(filepath)
     return df
@@ -56,11 +52,11 @@ def preprocess_data(df):
     date_columns = [col.replace(' ', '_').replace('/', '_').lower() for col in date_columns]
     glove_path = config["glove_path"]["glove_path"]
 
-    logging.info(f"Nominal columns:, {nominal_columns}") 
-    logging.info(f"Date format:, {date_format}")
-    logging.info(f"Columns to encode:, {columns_to_encode}")
-    logging.info(f"Date columns:, {date_columns}")
-    logging.info(f"GloVe path:, {glove_path}")
+    logging.info(f"Nominal columns: {nominal_columns}")
+    logging.info(f"Date format: {date_format}")
+    logging.info(f"Columns to encode: {columns_to_encode}")
+    logging.info(f"Date columns: {date_columns}")
+    logging.info(f"GloVe path: {glove_path}")
 
 
     # Convert object columns to category
@@ -96,10 +92,10 @@ def preprocess_data(df):
     logging.info("Detected anomalies:")
     logging.info(df_with_anomalies[df_with_anomalies['any_anomaly'] == 1].head())
      
-    logging.info("final DF:\n", df_with_anomalies.info())    
+    logging.info(f"final DF:\n{df_with_anomalies}") 
 
     # Normalize the data
-    df_with_anomalies_normalized = normalize_data(df_with_anomalies) 
+    #df_with_anomalies_normalized = normalize_data(df_with_anomalies) 
 
 
     return df_with_anomalies

@@ -11,34 +11,51 @@ from src.logging_config import setup_logging
 import math
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
+import pickle
+import yaml
+
+# Add the src directory to PYTHONPATH
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+# Load the configuration file
+config_path = os.path.join(os.path.dirname(__file__), "../../config/config.yaml")
+with open(config_path, "r") as file:
+    config = yaml.safe_load(file)
 
 # Load the scaler
-scaler_path = "models/scaler.pkl"
+scaler_path = config["dnn_scaler_path"]
 if not os.path.exists(scaler_path):
     raise FileNotFoundError(f"Scaler not found at {scaler_path}. Please train the model and save the scaler.")
-scaler = load(scaler_path)
+with open(scaler_path, "rb") as f:
+    loaded_data = pickle.load(f)
+
+scaler = loaded_data["scaler"]
+feature_names = loaded_data["feature_names"]
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,  # Set the logging level to INFO
+    level=logging.DEBUG,  # Set the logging level to INFO
     format="%(asctime)s - %(levelname)s - %(filename)s - %(message)s",  # Include the file name in the log format
     handlers=[
         logging.StreamHandler()  # Output logs to the console
     ]
 )
 
-# Add the src directory to PYTHONPATH
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 
 # Load the trained model
-model_path = "models/logistic_regression_model.pkl"
+model_path = config["lr_model_path"]
 if not os.path.exists(model_path):
     raise FileNotFoundError(f"Logistic Regression model not found at {model_path}. Please train and save the model.")
 
-model = load(model_path)
+model_data = load(model_path)
+model = model_data["model"]
+lr_feature_names = model_data["feature_names"]
+lr_scaler = model_data["scaler"]
+
 
 # Load the trained model
-nn_model_path = "models/deep_learning_model"
+nn_model_path = config["dnn_model_path"]
 
 if not os.path.exists(nn_model_path):
     raise FileNotFoundError(f"Deep Learning model not found at {nn_model_path}. Please train and save the model.")
@@ -84,6 +101,7 @@ class PredictionInput(BaseModel):
 # Initialize FastAPI
 app = FastAPI()
 
+
 # Define the root endpoint
 @app.get("/")
 def read_root():
@@ -100,12 +118,17 @@ def predict(input_data: PredictionInput):
     processed_df = preprocess_raw_input(raw_input)
 
     # Ensure the processed data has the same columns as the model expects
-    missing_columns = set(model.feature_names_in_) - set(processed_df.columns)
+    missing_columns = set(lr_feature_names) - set(processed_df.columns)
     for col in missing_columns:
         processed_df[col] = 0  # Add missing columns with default values
 
     # Reorder columns to match the model's training data
-    processed_df = processed_df[model.feature_names_in_]
+    processed_df = processed_df[lr_feature_names]
+
+    # Normalize the input using the trained scaler
+    processed_df = lr_scaler.transform(processed_df)
+
+    logging.info(f"Normalized input DataFrame:\n{processed_df}")
 
     # Make predictions
     prediction = model.predict(processed_df)
@@ -117,7 +140,6 @@ def predict(input_data: PredictionInput):
         "probability": prediction_proba[0].tolist()
     }
 
-# Define the prediction endpoint for the deep learning model
 @app.post("/nn/predict")
 def nn_predict(input_data: PredictionInput):
     # Convert input_data (Pydantic model) to a dictionary
@@ -129,21 +151,46 @@ def nn_predict(input_data: PredictionInput):
     logging.info(f"Processed DataFrame before conversion:\n{processed_df.head()}")
     logging.info(f"Processed DataFrame dtypes:\n{processed_df.dtypes}")
 
+    logging.info(f"feature names:\n{feature_names}")
+
     # Ensure all data is numeric
     processed_df = processed_df.apply(pd.to_numeric, errors='coerce')
     processed_df.fillna(0, inplace=True)
 
     logging.info(f"Processed DataFrame for NN: {processed_df.shape}")
 
-    # Convert the processed DataFrame to a NumPy array
+    # Ensure the processed data has the same columns as the deep learning model expects
+    missing_columns = set(feature_names) - set(processed_df.columns)
+    for col in missing_columns:
+        processed_df[col] = 0  # Add missing columns with default values
+
+    # Reorder columns to match the scaler's training data
+    processed_df = processed_df[feature_names]
+
+    # Check if `processed_df` has valid data before assigning to `processed_array`
+    if processed_df.empty:
+        logging.error("Processed DataFrame is empty. Cannot proceed.")
+        return {"error": "Processed data is empty"}
+
+    # Convert DataFrame to NumPy array
     processed_array = processed_df.to_numpy()
 
-    # Normalize the input data using the loaded scaler
-    processed_array = scaler.transform(processed_array)
-    logging.info(f"Normalized input array for NN model:\n{processed_array}")
+    # Ensure `processed_array` is properly assigned before conversion
+    if processed_array is None or processed_array.size == 0:
+        logging.error("Processed array is None or empty.")
+        return {"error": "Processed array is empty"}
+
+    # Convert to DataFrame with feature names before normalization
+    processed_array_df = pd.DataFrame(processed_array, columns=feature_names)
+
+    # Normalize the input using the trained scaler
+    processed_array_normalized = scaler.transform(processed_array_df)
+
+    logging.info(f"Normalized input array for NN model:\n{processed_array_normalized}")
 
     # Make predictions
-    prediction_proba = nn_model.predict(processed_array)
+    prediction_proba = nn_model.predict(processed_array_normalized)
+    prediction_proba = np.nan_to_num(prediction_proba)  # Convert NaN to 0
     prediction = (prediction_proba > 0.5).astype(int)  # Convert probabilities to binary predictions
 
     # Debugging logs for model output
@@ -169,6 +216,7 @@ def nn_predict(input_data: PredictionInput):
 
     # Return the sanitized and validated response
     return response
+
 
 # Validate the model output
 def validate_output(data):

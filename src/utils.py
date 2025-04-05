@@ -3,7 +3,7 @@ import shap
 import logging
 import sys
 import os
-
+import json
 def load_data(filepath):
     import pandas as pd
     return pd.read_csv(filepath)
@@ -82,7 +82,7 @@ def split_data(X, Y, train_size, val_size, test_size, random_state=42):
     return X_train, X_val, X_test, Y_train, Y_val, Y_test
 
 
-def save_feature_metadata(X_train, target_feature, metadata_path="models/feature_metadata.txt"):
+def save_feature_metadata(X_train, target_feature, metadata_path="models/feature_metadata.json"):
     """
     Save feature names and target feature to a file.
 
@@ -91,18 +91,16 @@ def save_feature_metadata(X_train, target_feature, metadata_path="models/feature
         target_feature (str): Name of the target feature.
         metadata_path (str): Path to save the metadata file.
     """
+    import json
+
     # Extract feature names
     feature_names = X_train.columns.tolist()
 
     # Ensure the directory exists
     os.makedirs(os.path.dirname(metadata_path), exist_ok=True)
 
-    # Save feature names and target feature to a file
-    with open(metadata_path, "w") as f:
-        f.write("Features:\n")
-        for feature in feature_names:
-            f.write(f"{feature}\n")
-        f.write("\nTarget:\n")
-        f.write(target_feature)
+    with open(metadata_path, "w") as file:
+        json.dump({"features": feature_names}, file, indent=4)
 
-    logging.info(f"Feature names and target feature saved to {metadata_path}.")
+    print("Feature names saved to feature_metadata.json successfully!", metadata_path)
+

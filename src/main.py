@@ -81,7 +81,7 @@ def call_api_with_raw_input():
 # Function to call the API
 def call_dnn_api_with_raw_input():
     # Define the API endpoint
-    api_url = "http://127.0.0.1:8000//nn/predict"
+    api_url = "http://127.0.0.1:8000/nn/predict"
 
     # Example raw input data
     raw_input = {
@@ -161,11 +161,9 @@ if __name__ == "__main__":
 
 
      # Check if the model file exists
-    if os.path.exists(model_path) and os.path.exists("models/deep_learning_model"):
+    if os.path.exists(model_path):
         logging.info(f"Model file found at {model_path}. Loading the model...")
         model = load(model_path)
-        # Load the deep learning model
-        dnn_model = load_model("models/deep_learning_model")  # SavedModel format
     else:
         logging.info(f"Model file not found at {model_path}. Training a new model...")
 
@@ -178,9 +176,6 @@ if __name__ == "__main__":
 
         # Prepare X with only numeric fields
         X = data.select_dtypes(include=['number'])
-
-        # Prepare X with only numeric fields
-        X_dnn = data.select_dtypes(include=['number'])
 
         logging.info(f"X Columns: {X.columns}")
 
@@ -195,32 +190,54 @@ if __name__ == "__main__":
         save_feature_metadata(X_train, target_column)
 
         # Train and evaluate the logistic regression model
-        model = train_and_evaluate_logistic_regression(X_train, Y_train, X_val, Y_val, X_test, Y_test)
-        # Save the trained model
-        os.makedirs("models", exist_ok=True)  # Ensure the models directory exists
-        dump(model, model_path)
+        model = train_and_evaluate_logistic_regression(X, X_train, Y_train, X_val, Y_val, X_test, Y_test)
 
          # Perform SHAP analysis
         perform_shap_analysis(model, X_train_numeric, model_name="Logistic Regression")
 
 
-        # Split the data into training, validation, and test sets
-        X_train, X_val, X_test, Y_train, Y_val, Y_test = split_data(X_dnn, Y, train_size, validation_size, test_size)
 
-        logging.info(f"DNN X_train", {X_train.shape})
 
         # Perform SHAP analysis
         X_train_numeric = X_train.select_dtypes(include=['number'])  # Ensure numeric columns
         X_train_array = X_train_numeric.to_numpy()  # Convert to NumPy array for deep learning models
         feature_names = X_train_numeric.columns.tolist()  # Extract feature names
 
+    if os.path.exists(dnn_model_path):
+    # Load the deep learning model
+        dnn_model = load_model(dnn_model_path)  # SavedModel format
+    else:    
+        logging.info(f"Model file not found at {dnn_model_path}. Training a new model...")
+
+        # Load the dataset
+        data = load_data(dataset_path)
+
+        # Preprocess the data
+        data = preprocess_data(data)
+        logging.info(f"Post preprocess_data head:\n{data.head().T}")
+
+        # Prepare X with only numeric fields
+        X_dnn = data.select_dtypes(include=['number'])
+
+        logging.info(f"X Columns: {X_dnn.columns}")
+
+        Y = data[target_column]
+
+        # Split the data into training, validation, and test sets
+        X_train, X_val, X_test, Y_train, Y_val, Y_test = split_data(X_dnn, Y, train_size, validation_size, test_size)
+        # Perform SHAP analysis
+        X_train_numeric = X_train.select_dtypes(include=['number'])  # Ensure numeric columns
+
+        logging.info(f"DNN X_train {X_train.shape}")
+
         # Train and evaluate the deep learning model
-        dnn_model, history = build_and_evaluate_deep_learning_model(X_train, Y_train, X_val, Y_val, X_test, Y_test)
+        dnn_model, history = build_and_evaluate_deep_learning_model(X_dnn, X_train, Y_train, X_val, Y_val, X_test, Y_test)
         dnn_model.save("models/deep_learning_model")  # SavedModel format
         # Save the trained model        
-        logging.info(f"Deep Learning Model saved to models/deep_learning_model.h5.")
+        logging.info(f"Deep Learning Model saved to models/deep_learning_model")
 
         #perform_shap_analysis(dnn_model, X_train_array, model_name="Deep Learning Model", feature_names=feature_names)
+    
     # Call the API
     call_api_with_raw_input()
 

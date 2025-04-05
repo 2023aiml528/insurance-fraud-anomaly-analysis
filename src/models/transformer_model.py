@@ -1,33 +1,50 @@
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
-
-# Load the tokenizer and model
-tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-model = AutoModelForSequenceClassification.from_pretrained("bert-base-uncased", num_labels=2)  # Binary classification
-
-from datasets import load_dataset
-
-# Load dataset
-dataset = load_dataset("csv", data_files={"train": "train.csv", "test": "test.csv"})
-
-# Preview the dataset
-print(dataset)
-
-
-def tokenize_function(example):
-    return tokenizer(example["text_column"], padding="max_length", truncation=True, max_length=128)
-
-tokenized_dataset = dataset.map(tokenize_function, batched=True)
-
 import torch
 
-# Tokenize sample data
-sample_text = "Suspicious transaction detected"
-inputs = tokenizer(sample_text, return_tensors="pt")
+# Load FinBERT (optimized for financial text)
+model_name = "ProsusAI/finbert"
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForSequenceClassification.from_pretrained(model_name)
+from datasets import load_dataset
 
-# Get predictions
-with torch.no_grad():
+def detect_fraud(text):
+    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True)
     outputs = model(**inputs)
-    predictions = torch.softmax(outputs.logits, dim=1)
+    prediction = torch.argmax(outputs.logits, dim=1).item()
+    
+    return "Fraudulent" if prediction == 1 else "Legitimate"
 
-# Print results
-print(predictions))
+# Example usage
+sample_text = "This insurance claim seems suspicious due to inconsistent details."
+print(detect_fraud(sample_text))
+
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+import pandas as pd
+
+# Load dataset (replace with actual fraud dataset)
+data = pd.read_csv("updated_health_insurance_data_Benefits_with_discharge_summary.csv")
+X_train, X_test, y_train, y_test = train_test_split(data["text"], data["label"], test_size=0.2)
+
+# Train model
+rf_model = RandomForestClassifier()
+rf_model.fit(X_train, y_train)
+
+# Save model
+import pickle
+pickle.dump(rf_model, open("fraud_model.pkl", "wb"))
+
+
+from fastapi import FastAPI
+import pickle
+
+app = FastAPI()
+model = pickle.load(open("fraud_model.pkl", "rb"))
+
+@app.post("transformer/predict")
+def predict(text: str):
+    prediction = model.predict([text])
+    return {"fraud_status": "Fraudulent" if prediction[0] == 1 else "Legitimate"}
+
+# Run API: uvicorn api:app --reload

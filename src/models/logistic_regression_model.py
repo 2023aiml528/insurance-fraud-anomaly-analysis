@@ -4,8 +4,9 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from sklearn.metrics import confusion_matrix
 from joblib import dump
 import logging
+from sklearn.preprocessing import MinMaxScaler
 
-def train_and_evaluate_logistic_regression(X_train, Y_train, X_val, Y_val, X_test, Y_test):
+def train_and_evaluate_logistic_regression(X, X_train, Y_train, X_val, Y_val, X_test, Y_test):
     """
     Trains and evaluates a logistic regression model.
 
@@ -23,11 +24,26 @@ def train_and_evaluate_logistic_regression(X_train, Y_train, X_val, Y_val, X_tes
     # Initialize the logistic regression model
     model = LogisticRegression(random_state=42, max_iter=1000)
 
+    # Normalize the input data
+    scaler = MinMaxScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_val = scaler.transform(X_val)
+    X_test = scaler.transform(X_test)
+
+
+
     # Train the model on the training set
     model.fit(X_train, Y_train)
 
+    model_data = {
+        "model": model,
+        "feature_names": X.columns.tolist(),  # Ensure X is a DataFrame
+        "scaler": scaler  # Save the scaler for future use
+    }
+
+
     # Save the trained model
-    dump(model, "src/models/logistic_regression_model.pkl")
+    dump(model_data, "models/logistic_regression_model.pkl")
     logging.info("Model saved successfully!")
 
     # Validate the model on the validation set
