@@ -412,6 +412,8 @@ def retrain_dnn_model():
     logging.info(f"df: {df.shape}")
 
     df = preprocess_data(df)
+    df.to_csv("output.csv", index=False)
+
     # Preprocess features and labels
     X = df.drop(columns=[config["columns"]["target"]])  # Adjust as needed
     X = X.select_dtypes(include=['number'])
@@ -423,5 +425,5 @@ def retrain_dnn_model():
     
     # Train new model
     dnn_model, history = build_and_evaluate_deep_learning_model(X_nn, X_train, Y_train, X_val, Y_val, X_test, Y_test)
-    dnn_model.save("models/deep_learning_model")  # SavedModel format
+    dnn_model.save(config["models"]["deep_learning"])  # SavedModel format
     print("Model Deep Learing retrained & saved!")    

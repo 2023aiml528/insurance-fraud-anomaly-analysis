@@ -14,3 +14,4 @@ jsonschema
 uvicorn
 imbalanced-learn
 python-multipart
+numpy

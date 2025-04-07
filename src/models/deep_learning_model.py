@@ -145,7 +145,7 @@ def build_model(input_dim):
 class CustomEarlyStopping(EarlyStopping):
     def on_train_begin(self, logs=None):
         """Initialize best metric value at the start of training"""
-        self.best = np.Inf if self.monitor_op == np.less else -np.Inf
+        self.best = np.inf if self.monitor_op == np.less else -np.inf
         self.best_weights = self.model.get_weights()
 
     def on_epoch_end(self, epoch, logs=None):

@@ -93,7 +93,7 @@ columns:
 
 models:
   logistic_regression: "models/logistic_regression_model.pkl"
-  deep_learning: "models/deep_learning_model"
+  deep_learning: "models/deep_learning_model.keras"
   scaler: "models/scaler.pkl"
 
 logging:
