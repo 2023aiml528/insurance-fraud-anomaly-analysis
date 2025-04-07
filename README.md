@@ -32,13 +32,7 @@ Contains stored models for fraud prediction:
 - **`deep_learning_model`** → tantensorflow  **DNN model** dump.  
 - **`scaler.pkl`** → dump for scaler used  on trained DNN model 
 
-### **🔹 Future Goals for the Transformer Model**  
-- ✅ **Advanced NLP Capabilities** → Utilize transformer-based models for fraud pattern analysis.  
-- ✅ **Integration with Hugging Face** → Leverage pretrained models for better accuracy and efficiency.  
-- ✅ **Enhanced Fraud Prediction** → Improve classification of insurance claims using deep learning.  
-- ✅ **Optimized Performance** → Fine-tune the model for real-time fraud detection.  
 
-As development progresses, this model will complement existing **Logistic Regression and Deep Learning approaches**, offering a **state-of-the-art fraud detection framework**.
 
 ### **Source Code (`src/`)**  
 Contains main project logic:  
@@ -50,6 +44,14 @@ Contains main project logic:
 - **`logistic_regression_model.py`** → Implements a logistic regression model for fraud detection.  
 - **`deep_learning_model.py`** → Builds and trains a **DNN model** to classify fraudulent claims.  
 - **`transformer_model.py`** → Currently in the **initial phase of development**, with plans to integrate it with an existing **Hugging Face transformer model**, leveraging the latest OpenAI-powered architectures for fraud detection. 
+
+### **🔹 Future Goals for the Transformer Model**  
+- ✅ **Advanced NLP Capabilities** → Utilize transformer-based models for fraud pattern analysis.  
+- ✅ **Integration with Hugging Face** → Leverage pretrained models for better accuracy and efficiency.  
+- ✅ **Enhanced Fraud Prediction** → Improve classification of insurance claims using deep learning.  
+- ✅ **Optimized Performance** → Fine-tune the model for real-time fraud detection.  
+
+As development progresses, this model will complement existing **Logistic Regression and Deep Learning approaches**, offering a **state-of-the-art fraud detection framework**.
 
 ### **Tests (`tests/`)**  
 Includes unit tests:  
