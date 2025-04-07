@@ -3,13 +3,14 @@ import pandas as pd
 import logging
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout, BatchNormalization
+from tensorflow.keras.layers import Dense, Dropout, BatchNormalization, Activation
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report, confusion_matrix
 from joblib import dump, load
 from imblearn.over_sampling import SMOTE
+from tensorflow.keras.metrics import Precision, Recall
 
 # Dynamically handle imports based on execution context
 try:
@@ -22,7 +23,7 @@ except ModuleNotFoundError:
 
 
 # Function to build and evaluate the deep learning model
-def build_and_evaluate_deep_learning_model(X, X_train, Y_train, X_val, Y_val, X_test, Y_test, epochs=10, batch_size=20):
+def build_and_evaluate_deep_learning_model(X, X_train, Y_train, X_val, Y_val, X_test, Y_test, epochs=20, batch_size=20):
     """
     Builds, trains, and evaluates a deep learning neural network model.
     """
@@ -69,7 +70,7 @@ def build_and_evaluate_deep_learning_model(X, X_train, Y_train, X_val, Y_val, X_
         X_train_resampled, Y_train_resampled,
         validation_data=(X_val, Y_val),
         epochs=epochs, batch_size=batch_size,
-        verbose=2, callbacks=[early_stop]
+        verbose=2, #callbacks=[early_stop]
     )
 
     
@@ -124,18 +125,19 @@ def build_model(input_dim):
 
     # Hidden layers with dropout to prevent overfitting
     for _ in range(5):  # Reduce layers for efficiency
-        model.add(Dense(64, activation='relu'))
-        model.add(Dropout(0.3))  # Increase dropout to mitigate overfitting
-        model.add(BatchNormalization())
+        model.add(Dense(64))  
+        model.add(BatchNormalization())  # Place before activation  
+        model.add(Activation('relu'))  
+        model.add(Dropout(0.3))  # Enable dropout 
 
     # Output layer for binary classification
     model.add(Dense(1, activation='sigmoid'))
 
     # Compile the model with optimized settings
     model.compile(
-        optimizer=Adam(learning_rate=0.0005),  # Reduce learning rate for better stability
+        optimizer=Adam(learning_rate=0.001),  # Reduce learning rate for better stability
         loss='binary_crossentropy',
-        metrics=['accuracy']
+        metrics=['accuracy',Precision(), Recall()]
     )
 
     return model
