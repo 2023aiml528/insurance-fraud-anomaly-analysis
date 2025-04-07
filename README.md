@@ -65,19 +65,19 @@ Includes unit tests:
 uvicorn src.api.lr_api:app --reload --log-level info  # Insurance Fraud Anomaly Analysis
 
 
-💻 Installation
+## **💻 Installation
 1️⃣ Create a Python Environment
-python -m venv env
+    python -m venv env
 
 2️⃣ Activate the Environment
-source env/bin/activate  # Mac/Linux
-env\Scripts\activate  # Windows
+    source env/bin/activate  # Mac/Linux
+    env\Scripts\activate  # Windows
 
 3️⃣ Clone the Repository
-git clone https://github.com/2023aiml528/insurance-fraud-anomaly-analysis.git
+    git clone https://github.com/2023aiml528/insurance-fraud-anomaly-analysis.git
 
 4️⃣ Navigate to the Project Directory
-cd insurance-fraud-anomaly-analysis
+    cd insurance-fraud-anomaly-analysis
 
 5️⃣ Install Dependencies
-pip install -r requirements.txt
+    pip install -r requirements.txt
