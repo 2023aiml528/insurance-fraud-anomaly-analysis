@@ -76,6 +76,7 @@ To explore and test the API interactively, visit the Swagger UI:
 👉 [Swagger API Docs](http://127.0.0.1:8000/docs#/default)
 
 📌 API Endpoints
+
 -1️⃣ Predict Fraud in an Insurance Claim using Logistic Regression
 Endpoint:
 POST /predict
