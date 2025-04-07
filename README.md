@@ -28,9 +28,9 @@ Provides application logs for **debugging and monitoring**.
 
 ### **Models (`models/`)**  
 Contains stored models for fraud prediction:  
-- **`logistic_regression_model.py`** → Implements a logistic regression model for fraud detection.  
-- **`deep_learning_model.py`** → Builds and trains a **DNN model** to classify fraudulent claims.  
-- **`transformer_model.py`** → Currently in the **initial phase of development**, with plans to integrate it with an existing **Hugging Face transformer model**, leveraging the latest OpenAI-powered architectures for fraud detection.  
+- **`logistic_regression_model.pkl`** → model dump kept once trained.  
+- **`deep_learning_model`** → tantensorflow  **DNN model** dump.  
+- **`scaler.pkl`** → dump for scaler used  on trained DNN model 
 
 ### **🔹 Future Goals for the Transformer Model**  
 - ✅ **Advanced NLP Capabilities** → Utilize transformer-based models for fraud pattern analysis.  
