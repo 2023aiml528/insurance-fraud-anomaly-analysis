@@ -67,12 +67,6 @@ Includes unit tests:
  uvicorn src.api.lr_api:app --reload --log-level info  # Insurance Fraud Anomaly Analysis
 ```
 
-## 🌍 API Documentation
-🔹 Overview
-The API is built using FastAPI, allowing clients to interact with the fraud detection models. It supports endpoints for predicting fraudulent insurance claims, retrieving model details, and handling uploaded datasets.
-
-Here's an updated API documentation section for your README.md, now including Swagger UI details:
-
 ## **🌍 API Documentation**
 -🔹 Overview
 The API is built using FastAPI, allowing clients to interact with the fraud detection models. It supports endpoints for predicting fraudulent insurance claims, retrieving model details, and handling uploaded datasets.
@@ -80,15 +74,15 @@ To explore and test the API interactively, visit the Swagger UI:
 👉 Swagger API Docs
 
 📌 API Endpoints
-1️⃣ Predict Fraud in an Insurance Claim using Logistic Regression
+-1️⃣ Predict Fraud in an Insurance Claim using Logistic Regression
 Endpoint:
 POST /predict
 
-2️⃣ Upload a New Dataset
+-2️⃣ Upload a New Dataset
 Endpoint:
 POST /train
 
-3️⃣ Predict Fraud in an Insurance Claim using DNN
+-3️⃣ Predict Fraud in an Insurance Claim using DNN
 Endpoint:
 POST /nn/predict
 
