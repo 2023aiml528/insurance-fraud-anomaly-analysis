@@ -25,7 +25,7 @@ import os
 # Add the src directory to PYTHONPATH
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 
 
 # Define log folder inside root
@@ -308,7 +308,7 @@ async def train(file: UploadFile = File(...)):
     logging.info(f"Upload folder config: {upload_folder_path}")
 
     # Get the project's root directory dynamically
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
     logging.info(f"Project root: {project_root}")
 
     # Define upload folder dynamically relative to project directory
