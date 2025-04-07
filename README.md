@@ -66,7 +66,7 @@ Includes unit tests:
 ## **🚀 API Instructions**  
 ### **Start the FastAPI Server**  
 ```bash
- uvicorn src.api.lr_api:app --reload --log-level info  # Insurance Fraud Anomaly Analysis
+ uvicorn src.api.api:app --reload --log-level info  # Insurance Fraud Anomaly Analysis
 ```
 
 ## **🌍 API Documentation**
