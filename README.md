@@ -30,7 +30,15 @@ Provides application logs for **debugging and monitoring**.
 Contains stored models for fraud prediction:  
 - **`logistic_regression_model.py`** → Implements a logistic regression model for fraud detection.  
 - **`deep_learning_model.py`** → Builds and trains a **DNN model** to classify fraudulent claims.  
-- **`transformer_model.py`** → Planned integration with Hugging Face transformer models for fraud detection.  
+- **`transformer_model.py`** → Currently in the **initial phase of development**, with plans to integrate it with an existing **Hugging Face transformer model**, leveraging the latest OpenAI-powered architectures for fraud detection.  
+
+### **🔹 Future Goals for the Transformer Model**  
+- ✅ **Advanced NLP Capabilities** → Utilize transformer-based models for fraud pattern analysis.  
+- ✅ **Integration with Hugging Face** → Leverage pretrained models for better accuracy and efficiency.  
+- ✅ **Enhanced Fraud Prediction** → Improve classification of insurance claims using deep learning.  
+- ✅ **Optimized Performance** → Fine-tune the model for real-time fraud detection.  
+
+As development progresses, this model will complement existing **Logistic Regression and Deep Learning approaches**, offering a **state-of-the-art fraud detection framework**.
 
 ### **Source Code (`src/`)**  
 Contains main project logic:  
@@ -55,3 +63,21 @@ Includes unit tests:
 ### **Start the FastAPI Server**  
 ```bash
 uvicorn src.api.lr_api:app --reload --log-level info  # Insurance Fraud Anomaly Analysis
+
+
+💻 Installation
+1️⃣ Create a Python Environment
+python -m venv env
+
+2️⃣ Activate the Environment
+source env/bin/activate  # Mac/Linux
+env\Scripts\activate  # Windows
+
+3️⃣ Clone the Repository
+git clone https://github.com/2023aiml528/insurance-fraud-anomaly-analysis.git
+
+4️⃣ Navigate to the Project Directory
+cd insurance-fraud-anomaly-analysis
+
+5️⃣ Install Dependencies
+pip install -r requirements.txt
