@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report
@@ -5,6 +6,18 @@ from sklearn.metrics import confusion_matrix
 from joblib import dump
 import logging
 from sklearn.preprocessing import MinMaxScaler
+import yaml
+import sys
+import os
+# Dynamically handle imports based on execution context
+try:
+    # When running from `main.py`
+    from utils import load_data, encode_categorical, normalize_data, split_data, load_config
+except ModuleNotFoundError:
+    # When running from FastAPI (e.g., `uvicorn`)
+    from src.utils import load_data, encode_categorical, normalize_data, split_data, load_config
+
+config = load_config()
 
 def train_and_evaluate_logistic_regression(X, X_train, Y_train, X_val, Y_val, X_test, Y_test):
     """
@@ -26,9 +39,9 @@ def train_and_evaluate_logistic_regression(X, X_train, Y_train, X_val, Y_val, X_
 
     # Normalize the input data
     scaler = MinMaxScaler()
-    X_train = scaler.fit_transform(X_train)
-    X_val = scaler.transform(X_val)
-    X_test = scaler.transform(X_test)
+    X_train = scaler.fit_transform(X_train[X.columns])
+    X_val = scaler.transform(X_val[X.columns])
+    X_test = scaler.transform(X_test[X.columns])
 
 
 
@@ -43,7 +56,7 @@ def train_and_evaluate_logistic_regression(X, X_train, Y_train, X_val, Y_val, X_
 
 
     # Save the trained model
-    dump(model_data, "models/logistic_regression_model.pkl")
+    dump(model_data, config["models"]["logistic_regression"])
     logging.info("Model saved successfully!")
 
     # Validate the model on the validation set
@@ -81,4 +94,5 @@ def train_and_evaluate_logistic_regression(X, X_train, Y_train, X_val, Y_val, X_
     logging.info(confusion_matrix(Y_test, Y_test_pred))
 
     return model
+
 

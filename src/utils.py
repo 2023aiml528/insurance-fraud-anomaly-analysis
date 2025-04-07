@@ -1,9 +1,19 @@
+from datetime import datetime
+import shutil
+import pandas as pd
 from sklearn.model_selection import train_test_split
 import shap
 import logging
 import sys
 import os
 import json
+import os
+import yaml
+
+
+# Add the src directory to PYTHONPATH
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 def load_data(filepath):
     import pandas as pd
     return pd.read_csv(filepath)
@@ -104,3 +114,65 @@ def save_feature_metadata(X_train, target_feature, metadata_path="models/feature
 
     print("Feature names saved to feature_metadata.json successfully!", metadata_path)
 
+def load_expected_headers():
+    config = load_config()
+    return set(config["expected_headers"])
+
+
+def load_config():
+    """Loads application configuration from YAML."""
+    config_path = os.path.join(os.path.dirname(__file__), "../config/config.yaml")
+    with open(config_path, "r") as file:
+        return yaml.safe_load(file)
+
+
+import os
+import shutil
+import pandas as pd
+from datetime import datetime
+import logging
+
+def merge_csv(file_path):
+    config = load_config()
+    
+    """Merges uploaded CSV into the main training dataset while taking a backup."""
+    
+    # Move up one level from `src` to reach project root
+    current_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    logging.info(f"Current path root: {current_path}")
+
+    master_data = os.path.join(current_path, config["storage"]["master_csv"])
+    logging.info(f"Master data path: {master_data}")
+
+    # Ensure the backup folder is defined before checking the master file
+    backup_folder = os.path.join(current_path, config["storage"]["backup"]["folder"])
+    os.makedirs(backup_folder, exist_ok=True)
+    logging.info(f"Backup folder: {backup_folder}")
+
+    # Backup the existing master file before merging
+    if os.path.exists(master_data):
+        # Generate a unique backup filename with a timestamp
+        backup_file = os.path.join(
+            backup_folder, f"train_data_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        )
+
+        # Use shutil.copy2 to preserve metadata
+        shutil.copy2(master_data, backup_file)
+        logging.info(f"Backup saved successfully at: {backup_file}")
+
+    # Load the new data
+    uploaded_df = pd.read_csv(file_path)
+    logging.info(f"Uploaded data shape: {uploaded_df.shape}")
+
+    # Merge with existing data
+    if os.path.exists(master_data):
+        master_df = pd.read_csv(master_data)
+        combined_df = pd.concat([master_df, uploaded_df], ignore_index=True)
+    else:
+        combined_df = uploaded_df  # If no previous file exists, use the new upload
+
+    # Save the updated master file
+    combined_df.to_csv(master_data, index=False)
+    logging.info(f"merged data set shape: {combined_df.shape}")
+    logging.info(f"Type of df before head(): {type(combined_df)}")
+    logging.info("Master dataset updated for retraining!")

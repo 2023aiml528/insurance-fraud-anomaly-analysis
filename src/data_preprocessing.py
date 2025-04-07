@@ -5,38 +5,52 @@ from sklearn.preprocessing import MinMaxScaler, LabelEncoder
 import yaml
 import logging
 import math
+from joblib import dump, load
+from tensorflow.keras.models import load_model
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report, confusion_matrix
 
 # Dynamically handle imports based on execution context
 try:
     # When running from `main.py`
-    from utils import load_data, encode_categorical, normalize_data, split_data
+    from utils import load_data, encode_categorical, normalize_data, split_data, load_config
     from anomaly_detection import AnomalyDetector
+    from models.deep_learning_model import build_and_evaluate_deep_learning_model
+    from models.logistic_regression_model import train_and_evaluate_logistic_regression
+    from visualization  import perform_shap_analysis
 except ModuleNotFoundError:
     # When running from FastAPI (e.g., `uvicorn`)
-    from src.utils import load_data, encode_categorical, normalize_data, split_data
+    from src.utils import load_data, encode_categorical, normalize_data, split_data, load_config
     from src.anomaly_detection import AnomalyDetector
+    from src.models.deep_learning_model import build_and_evaluate_deep_learning_model
+    from src.models.logistic_regression_model import train_and_evaluate_logistic_regression
+    from src.visualization  import perform_shap_analysis
 
 # Add the src directory to PYTHONPATH
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+config= load_config()
 def load_data(filepath):
     df = pd.read_csv(filepath)
     return df
 
 def preprocess_data(df):
 
+    logging.info(f"Type of df before head(): {type(df)}")
+
+    logging.info(f"df.shape:\n{df.shape}")
     # Standardize column names: replace spaces and slashes with underscores, and convert to lowercase
     df.columns = df.columns.str.replace(' ', '_').str.replace('/', '_').str.lower()
+    logging.info(f"Standardize column names: replace spaces and slashes with underscores, and convert to lowercase:\n{df.columns}")
 
-    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-    # Load the configuration file
-    config_path = os.path.join(os.path.dirname(__file__), "../config/config.yaml")
-    with open(config_path, "r") as file:
-        config = yaml.safe_load(file)
 
     # Handle missing values
     df.ffill(inplace=True)
-    
+    logging.info(f"after removing missing values:\n{df.columns}")
+
+    # Remove duplicates
+    df = df.drop_duplicates(keep='first')
+
+        
     # Display categorical features
     categorical_features = []
 
@@ -50,7 +64,7 @@ def preprocess_data(df):
 
     date_columns = config["columns"]["date_columns"]
     date_columns = [col.replace(' ', '_').replace('/', '_').lower() for col in date_columns]
-    glove_path = config["glove_path"]["glove_path"]
+    glove_path = config["glove"]["path"]
 
     logging.info(f"Nominal columns: {nominal_columns}")
     logging.info(f"Date format: {date_format}")
@@ -60,11 +74,11 @@ def preprocess_data(df):
 
 
     # Convert object columns to category
-    df = convert_object_columns_to_category(df, categorical_features, date_format)
+    #df = convert_object_columns_to_category(df, categorical_features, date_format)
 
 
     # Encode selected categorical columns
-    categorical_columns = df.select_dtypes(include=['category']).columns.tolist()
+    #categorical_columns = df.select_dtypes(include=['category']).columns.tolist()
 
 
     if columns_to_encode:
@@ -164,7 +178,7 @@ def encode_selected_columns(df, columns_to_encode):
     """
     # Create a copy of the original DataFrame
     #df = df.copy()
-
+    logging.info(f"Columns to encode: {columns_to_encode}")
     # Initialize the LabelEncoder
     label_encoder = LabelEncoder()
 
@@ -176,9 +190,8 @@ def encode_selected_columns(df, columns_to_encode):
             logging.info(f"Warning: Column '{column}' not found in the DataFrame.")
 
     # Display the updated DataFrame information
-    logging.info("Updated DataFrame after label encoding:")
-    df.info()
-
+    logging.info(f"Updated DataFrame columns after label encoding: {df.columns.tolist()}")
+    
     return df
 
 import numpy as np
@@ -274,8 +287,7 @@ def convert_nominal_to_numeric_with_glove_single_value(df, columns_to_convert, g
         df[f"{standardized_column_name}_glove"] = numeric_column  # Add the new column to the DataFrame
 
     # Display the updated DataFrame information
-    logging.info("Updated DataFrame after label encoding:")
-    df.info()
+    logging.info("Updated DataFrame after glove encoding:")
     return df
 
 def convert_date_columns_to_numeric(df, date_columns, date_format=None):
@@ -336,3 +348,80 @@ def sanitize_input(data):
         if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
             logging.warning(f"Replacing invalid float value for key '{key}': {value}")
             data[key] = 0  # Replace with a default value
+
+def retrain_lr_model():
+    """Retrains the ML model with updated dataset."""
+
+    # Move up one level from `src` to reach project root
+    current_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    
+    logging.info(f"Current path root: {current_path}")
+    master_data = os.path.join(current_path, config["storage"]["master_csv"])
+    logging.info(f"Master data path: {master_data}")
+    # Load latest data
+    df = pd.read_csv(master_data)
+    logging.info(f"Data loaded from {master_data}")
+    logging.info(f"Type of df before head(): {type(df)}")    
+    logging.info(f"df: {df.shape}")
+
+    df = preprocess_data(df)
+    # Preprocess features and labels
+    X = df.drop(columns=[config["columns"]["target"]])  # Adjust as needed
+    X = X.select_dtypes(include=['number'])
+    X_lr = X.copy()
+    Y = df[config["columns"]["target"]]  # Adjust as needed
+
+    # Split the data into training, validation, and test sets
+    X_train, X_val, X_test, Y_train, Y_val, Y_test = split_data(X, Y, config["data_split"]["test_size"], config["data_split"]["validation_size"], config["data_split"]["test_size"])
+    print("Checking for NaN values...")
+    print(X_train.isnull().sum())  # Verify missing values
+    print(X_train.describe())  # Look for unexpected values
+
+    # Ensure no NaNs remain
+    X_train.fillna(0, inplace=True)  # Replace NaNs with zeros
+    X_val.fillna(0, inplace=True)
+    X_test.fillna(0, inplace=True)
+
+
+
+    # Train new model
+    model = train_and_evaluate_logistic_regression(X_lr, X_train, Y_train, X_val, Y_val, X_test, Y_test)
+    logging.info("Model Logistic Regression model retrained & saved!")
+
+def trigger_model_retraining():
+    """Triggers automated model retraining."""
+    retrain_lr_model()
+    retrain_dnn_model()
+    logging.info("Model successfully retrained after new upload!")            
+
+
+
+def retrain_dnn_model():
+    """Retrains the ML model with updated dataset."""
+
+    # Move up one level from `src` to reach project root
+    current_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    
+    logging.info(f"Current path root: {current_path}")
+    master_data = os.path.join(current_path, config["storage"]["master_csv"])
+    logging.info(f"Master data path: {master_data}")
+    # Load latest data
+    df = pd.read_csv(master_data)
+    logging.info(f"Data loaded from {master_data}")
+    logging.info(f"Type of df before head(): {type(df)}")    
+    logging.info(f"df: {df.shape}")
+
+    df = preprocess_data(df)
+    # Preprocess features and labels
+    X = df.drop(columns=[config["columns"]["target"]])  # Adjust as needed
+    X = X.select_dtypes(include=['number'])
+    X_nn = X.copy()
+    Y = df[config["columns"]["target"]]  # Adjust as needed
+
+    # Split the data into training, validation, and test sets
+    X_train, X_val, X_test, Y_train, Y_val, Y_test = split_data(X, Y, config["data_split"]["test_size"], config["data_split"]["validation_size"], config["data_split"]["test_size"])
+    
+    # Train new model
+    dnn_model, history = build_and_evaluate_deep_learning_model(X_nn, X_train, Y_train, X_val, Y_val, X_test, Y_test)
+    dnn_model.save("models/deep_learning_model")  # SavedModel format
+    print("Model Deep Learing retrained & saved!")    

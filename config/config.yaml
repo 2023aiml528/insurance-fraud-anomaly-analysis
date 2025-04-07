@@ -1,65 +1,105 @@
 dataset:
   path: "data/updated_health_insurance_data_Benefits_with_discharge_summary.csv"
-  test_size: 50
-  validation_size: 150
-  train_size: 800
+  expected_headers:
+    - Provider ID
+    - Procedure codes/CPT Code
+    - Billing frequency
+    - Patient ID
+    - Total amount
+    - Doctor
+    - Hospital
+    - Diagnosis Report
+    - Discharge Summary
+    - Prescriptions and Bills
+    - Hospital Bills
+    - Insurance Company Name
+    - Fraud history approval/rejection status
+    - Contact Details
+    - Network Partners
+    - Benefits
+    - Policy Number
+    - Policy type
+    - Renewal Date
+    - Claim limits
+    - Premium amount
+    - Start Date
+    - End Date
+    - Bank Account
+    - Policy Number (Claim)
+    - Policy Holder Name
+    - Address
+    - Phone Number
+    - Email
+    - Covered
+    - Hospitalized Date
+    - Treatment expenses
+    - Claim Documents Submitted
+    - Policy Name
 
-glove_path:
-  glove: "data/glove/glove.6B.50d.txt"
-  glove_dim: 50
-  glove_path: "data/glove/glove.6B.50d.txt"
+data_split:
+  train_size: 0.80
+  validation_size: 0.15
+  test_size: 0.05
+
+storage:
+  master_csv: "data/updated_health_insurance_data_Benefits_with_discharge_summary.csv"
+  backup:
+    folder: "data/backup"
+    file: "data/backup/updated_health_insurance_data_Benefits_with_discharge_summary_backup.csv"
+    max_backup_count: 5
+
+upload:
+  folder: "data/uploaded_files"
+  max_size: 5
+
+glove:
+  path: "data/glove/glove.6B.50d.txt"
+  dim: 50
 
 columns:
   target: "fraud_history_approval_rejection_status_encoded"
   nominal:
-    - "Provider ID"
-    - "Patient ID"
-    - "Doctor"
-    - "Hospital"
-    - "Contact Details"
-    - "Diagnosis Report"
-    - "Discharge Summary"
-    - "Prescriptions and Bills"
-    - "Insurance Company Name"
-    - "Policy Number"
-    - "Email"
-    - "Address"
-    - "Phone Number"
-    - "Policy Name"
-    - "Procedure codes/CPT Code"
-    - "Network Partners"
-    - "Bank Account"
-    - "Policy Holder Name"
+    - Provider ID
+    - Patient ID
+    - Doctor
+    - Hospital
+    - Contact Details
+    - Diagnosis Report
+    - Discharge Summary
+    - Prescriptions and Bills
+    - Insurance Company Name
+    - Policy Number
+    - Email
+    - Address
+    - Phone Number
+    - Policy Name
+    - Procedure codes/CPT Code
+    - Network Partners
+    - Bank Account
+    - Policy Holder Name
   labeled:
-    - "Covered"
-    - "Claim Documents Submitted"
-    - "Fraud history approval/rejection status"
-    - "Benefits"
-    - "Billing frequency"
-    - "Policy type"
+    - Covered
+    - Claim Documents Submitted
+    - Fraud history approval/rejection status
+    - Benefits
+    - Billing frequency
+    - Policy type
   date_columns:
-    - "Start Date"
-    - "End Date"
-    - "Renewal Date"
-    - "Hospitalized Date"
+    - Start Date
+    - End Date
+    - Renewal Date
+    - Hospitalized Date
   date_format: "%d-%m-%Y"
 
-lr_model_path:  "models/logistic_regression_model.pkl"
-dnn_model_path:  "models/deep_learning_model"
-
-dnn_scaler_path: "models/scaler.pkl"
+models:
+  logistic_regression: "models/logistic_regression_model.pkl"
+  deep_learning: "models/deep_learning_model"
+  scaler: "models/scaler.pkl"
 
 logging:
   level: "INFO"  # Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-  log_file: "logs/application.log"  # Path to the log file
+  file: "logs/application.log"  # Path to the log file
   format: "%(asctime)s - %(levelname)s - %(filename)s - %(message)s"  # Log message format
-
-model:
-  type: "RandomForestClassifier"
-  params:
-    n_estimators: 100
-    max_depth: 10
-    random_state: 42
 
 training:
   test_size: 0.2

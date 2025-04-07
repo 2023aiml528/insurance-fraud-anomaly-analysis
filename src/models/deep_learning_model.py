@@ -9,9 +9,20 @@ from tensorflow.keras.callbacks import EarlyStopping
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report, confusion_matrix
 from joblib import dump, load
+from imblearn.over_sampling import SMOTE
+
+# Dynamically handle imports based on execution context
+try:
+    # When running from `main.py`
+
+    from utils import load_data, encode_categorical, normalize_data, split_data, load_config
+except ModuleNotFoundError:
+    # When running from FastAPI (e.g., `uvicorn`)
+    from src.utils import load_data, encode_categorical, normalize_data, split_data, load_config
+
 
 # Function to build and evaluate the deep learning model
-def build_and_evaluate_deep_learning_model(df, X_train, Y_train, X_val, Y_val, X_test, Y_test, epochs=10, batch_size=20):
+def build_and_evaluate_deep_learning_model(X, X_train, Y_train, X_val, Y_val, X_test, Y_test, epochs=10, batch_size=20):
     """
     Builds, trains, and evaluates a deep learning neural network model.
     """
@@ -31,7 +42,7 @@ def build_and_evaluate_deep_learning_model(df, X_train, Y_train, X_val, Y_val, X
 
     scaler_data = {
         "scaler": scaler,
-        "feature_names": df.columns
+        "feature_names": X.columns
     }
 
     import pickle
@@ -42,6 +53,10 @@ def build_and_evaluate_deep_learning_model(df, X_train, Y_train, X_val, Y_val, X
     with open(scaler_path, "wb") as f:
         pickle.dump(scaler_data, f)
 
+        # Balance dataset using SMOTE (if needed)
+    smote = SMOTE(random_state=42)
+    X_train_resampled, Y_train_resampled = smote.fit_resample(X_train, Y_train)
+
     # Build the model
     model = build_model(input_dim=X_train.shape[1])
 
@@ -51,11 +66,13 @@ def build_and_evaluate_deep_learning_model(df, X_train, Y_train, X_val, Y_val, X
     # Train the model
     logging.info("Training the model...")
     history = model.fit(
-        X_train, Y_train,
+        X_train_resampled, Y_train_resampled,
         validation_data=(X_val, Y_val),
         epochs=epochs, batch_size=batch_size,
         verbose=2, callbacks=[early_stop]
     )
+
+    
 
     # Evaluate the model on the test set
     logging.info("\nEvaluating the model on the test set...")
@@ -87,7 +104,6 @@ def build_and_evaluate_deep_learning_model(df, X_train, Y_train, X_val, Y_val, X
 
     return model, history
 
-# Function to build the deep learning model
 def build_model(input_dim):
     """
     Builds a deep learning model.
@@ -101,28 +117,29 @@ def build_model(input_dim):
 
     logging.info(f"Building the model with input dimension: {input_dim}")
     model = Sequential()
-    
+
     # Input layer
-    model.add(Dense(50, activation='relu', input_dim=input_dim))
+    model.add(Dense(39, activation='relu', input_dim=input_dim))  # Match input features
     model.add(BatchNormalization())  # Helps stabilize training
 
     # Hidden layers with dropout to prevent overfitting
-    for _ in range(7):
-        model.add(Dense(50, activation='relu'))
-        model.add(Dropout(0.2))  # Add dropout to reduce overfitting
-        model.add(BatchNormalization())  # Normalize activations
+    for _ in range(5):  # Reduce layers for efficiency
+        model.add(Dense(64, activation='relu'))
+        model.add(Dropout(0.3))  # Increase dropout to mitigate overfitting
+        model.add(BatchNormalization())
 
     # Output layer for binary classification
     model.add(Dense(1, activation='sigmoid'))
 
     # Compile the model with optimized settings
     model.compile(
-        optimizer=Adam(learning_rate=0.001),
+        optimizer=Adam(learning_rate=0.0005),  # Reduce learning rate for better stability
         loss='binary_crossentropy',
         metrics=['accuracy']
     )
-    
+
     return model
+
 
 
 class CustomEarlyStopping(EarlyStopping):
@@ -136,3 +153,5 @@ class CustomEarlyStopping(EarlyStopping):
         if epoch == 0:  # Store initial weights
             self.best_weights = self.model.get_weights()
         super().on_epoch_end(epoch, logs)
+
+
