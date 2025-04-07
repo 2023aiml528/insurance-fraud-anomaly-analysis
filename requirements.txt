@@ -10,3 +10,7 @@ tensorflow
 PyYAML
 joblib
 fastapi
+jsonschema
+uvicorn
+imbalanced-learn
+python-multipart
