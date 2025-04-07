@@ -90,19 +90,19 @@ Endpoint:
 POST /nn/predict
 
 ## 💻 Installation
-1️⃣ Create a Python Environment
+-1️⃣ Create a Python Environment
 ```bash
     python -m venv env
 
-2️⃣ Activate the Environment
+-2️⃣ Activate the Environment
     source env/bin/activate  # Mac/Linux
     env\Scripts\activate  # Windows
 
-3️⃣ Clone the Repository
+-3️⃣ Clone the Repository
     git clone https://github.com/2023aiml528/insurance-fraud-anomaly-analysis.git
 
-4️⃣ Navigate to the Project Directory
+-4️⃣ Navigate to the Project Directory
     cd insurance-fraud-anomaly-analysis
 
-5️⃣ Install Dependencies
+-5️⃣ Install Dependencies
     pip install -r requirements.txt
