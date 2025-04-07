@@ -7,7 +7,9 @@ def update_readme():
 
 # Project Overview
 This project aims to identify fraudulent insurance claims using anomaly detection techniques applied to various patterns in the dataset. By analyzing discrepancies in billing details, patient records, policy information, and claim history, the system predicts whether a claim is fraudulent or legitimate.
-🔹 Key Features
+
+🔹 Key Features:
+
 ✅ Anomaly Detection → Identifies irregularities in insurance claims.
 ✅ Machine Learning Models → Predict fraud with high accuracy.
 ✅ Data-Driven Insights → Uses policyholder details and historical patterns.
@@ -18,8 +20,11 @@ This project aims to identify fraudulent insurance claims using anomaly detectio
 - **data/**: Contains the dataset and related documentation.
   The data folder is organized into three directories, each serving a specific purpose:
 1️⃣ Backup - Contains archived versions of datasets for safekeeping.
+
 2️⃣ Glove - Contains word embedding files (glove.6B.50d.txt) for NLP tasks.
+
 3️⃣ Uploaded Files - Holds user-uploaded datasets for analysis.
+
 Additionally, the folder includes one master dataset file, which serves as the primary data source for processing and analysis.
 
 - **config/**: Holds the primary YAML configuration file
@@ -41,11 +46,16 @@ Additionally, the folder includes one master dataset file, which serves as the p
   - **models/deep_learning_model.py**: script is responsible for training and building a Deep Neural Network (DNN) model designed for insurance fraud detection. This model leverages advanced machine learning techniques to analyze patterns in claims data and predict fraudulent cases.
    - **models/logistic_regression_model.py**:script implements a logistic regression model for detecting insurance fraud. It trains the model using the provided dataset and saves the trained model as a  file, enabling future predictions on unseen data.
    - **models/tranformer_model.py**: script is currently in the initial phase of development. The plan is to integrate it with an existing Hugging Face transformer model, leveraging the latest advancements in OpenAI-powered architectures for fraud detection.
+
 🔹 Future Goals for the Transformer Model
 ✅ Advanced NLP Capabilities → Utilize transformer-based models for fraud pattern analysis.
+
 ✅ Integration with Hugging Face → Leverage pretrained models for better accuracy and efficiency.
+
 ✅ Enhanced Fraud Prediction → Improve classification of insurance claims using deep learning.
+
 ✅ Optimized Performance → Fine-tune the model for real-time fraud detection.
+
 As development progresses, this model will complement existing Logistic Regression and Deep Learning approaches, offering a state-of-the-art fraud detection framework.
 - **tests/**: Contains unit tests for the project.
   - **__init__.py**: Marks the directory as a Python package for testing.
