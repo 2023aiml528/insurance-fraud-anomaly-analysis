@@ -62,11 +62,11 @@ Includes unit tests:
 ## **🚀 API Instructions**  
 ### **Start the FastAPI Server**  
 ```bash
-uvicorn src.api.lr_api:app --reload --log-level info  # Insurance Fraud Anomaly Analysis
+- uvicorn src.api.lr_api:app --reload --log-level info  # Insurance Fraud Anomaly Analysis
 
-
-## **💻 Installation
+---## **💻 Installation**
 1️⃣ Create a Python Environment
+```bash
     python -m venv env
 
 2️⃣ Activate the Environment
