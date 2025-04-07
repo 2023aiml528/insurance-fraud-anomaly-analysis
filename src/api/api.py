@@ -19,6 +19,9 @@ import yaml
 from src.utils import load_config,merge_csv
 import pandas as pd
 import os
+from fastapi.responses import FileResponse
+import webbrowser
+
 
 
 
@@ -370,4 +373,13 @@ async def train(file: UploadFile = File(...)):
         logging.error(f"Error processing CSV file: {str(e)}", exc_info=True)
         raise HTTPException(status_code=400, detail=f"Error processing CSV file: {str(e)}")
 
+
+@app.get("/eda")
+async def serve_html():
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+    HTML_FILE_PATH = os.path.join(project_root, "eda_visualizations/eda_report.html")
+    # Check if the file exists
+    if not os.path.exists(HTML_FILE_PATH):
+        raise HTTPException(status_code=404, detail="HTML file not found.")    
+    webbrowser.open(HTML_FILE_PATH)
 
