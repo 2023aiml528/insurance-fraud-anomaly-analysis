@@ -18,7 +18,7 @@ def update_readme():
 
 1. Start the FastAPI server:
    ```bash
-   uvicorn src.api.lr_api:app --reload# Insurance Fraud Anomaly Analysis
+   uvicorn src.api.lr_api:app --reload --log-level info# Insurance Fraud Anomaly Analysis
 
 This project focuses on analyzing anomalies in insurance fraud detection. It aims to identify and visualize various types of anomalies present in insurance claims data.
 
