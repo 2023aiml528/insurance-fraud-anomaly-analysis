@@ -23,13 +23,13 @@ import os
 
 
 # Add the src directory to PYTHONPATH
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 
 # Define log folder inside root
-log_folder = os.path.join(project_root, "log")
+log_folder = os.path.join(project_root, "logs")
 
 # Define log file path
 log_file_path = os.path.join(log_folder, "app.log")
