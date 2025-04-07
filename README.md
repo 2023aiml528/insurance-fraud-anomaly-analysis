@@ -1,17 +1,17 @@
 # Project Overview
 This project aims to identify fraudulent insurance claims using anomaly detection techniques applied to various patterns in the dataset. By analyzing discrepancies in billing details, patient records, policy information, and claim history, the system predicts whether a claim is fraudulent or legitimate.
 
-🔹 Key Features:
+-🔹 Key Features:
 
--✅ Anomaly Detection → Identifies irregularities in insurance claims.
--✅ Machine Learning Models → Predict fraud with high accuracy.
--✅ Data-Driven Insights → Uses policyholder details and historical patterns.
--✅ Automated Processing → Reduces manual review efforts
+  -✅ Anomaly Detection → Identifies irregularities in insurance claims.
+  -✅ Machine Learning Models → Predict fraud with high accuracy.
+  -✅ Data-Driven Insights → Uses policyholder details and historical patterns.
+  -✅ Automated Processing → Reduces manual review efforts
 
 
 ## Project Structure
 - **data/**: Contains the dataset and related documentation.
-  The data folder is organized into three directories, each serving a specific purpose:
+The data folder is organized into three directories, each serving a specific purpose:
 -1️⃣ Backup - Contains archived versions of datasets for safekeeping.
 
 -2️⃣ Glove - Contains word embedding files (glove.6B.50d.txt) for NLP tasks.
@@ -25,8 +25,10 @@ This project aims to identify fraudulent insurance claims using anomaly detectio
 - **log/** :Application logging helps with debugging and monitoring
 
 - **models/**: Directory contains stored model dumps for:
-  Logistic Regression Model → A traditional statistical method for fraud detection.
-  Deep Neural Network (DNN) Model → A more advanced machine learning approach for complex fraud patterns.
+  - **Logistic Regression Model →**
+      - A traditional statistical method for fraud detection.
+  - **Deep Neural Network (DNN) Model →**
+      - A more advanced machine learning approach for complex fraud patterns.
 
 - **notebooks/**: Contains Jupyter notebooks for analysis.
 
@@ -70,9 +72,8 @@ As development progresses, this model will complement existing Logistic Regressi
 ## API Instructions
 
 1. **Start the FastAPI server:**
-   **```bash
-   uvicorn src.api.lr_api:app --reload --log-level info  # Insurance Fraud Anomaly Analysis
-   ```**
+   ```bash
+     uvicorn src.api.lr_api:app --reload --log-level info   # Insurance Fraud Anomaly Analysis
 
 This project focuses on analyzing anomalies in insurance fraud detection. It aims to identify and visualize various types of anomalies present in insurance claims data.
 
