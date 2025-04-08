@@ -2,19 +2,24 @@ import os
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, roc_curve, auc
+import matplotlib.pyplot as plt
 from joblib import dump
 import logging
 from sklearn.preprocessing import MinMaxScaler
 import yaml
 import sys
 import os
+
+
 # Dynamically handle imports based on execution context
 try:
     # When running from `main.py`
+    from visualization import plot_lr_roc
     from utils import load_data, encode_categorical, normalize_data, split_data, load_config
 except ModuleNotFoundError:
     # When running from FastAPI (e.g., `uvicorn`)
+    from src.visualization import plot_lr_roc
     from src.utils import load_data, encode_categorical, normalize_data, split_data, load_config
 
 config = load_config()
@@ -89,9 +94,12 @@ def train_and_evaluate_logistic_regression(X, X_train, Y_train, X_val, Y_val, X_
     logging.info("\nClassification Report (Test):")
     logging.info(classification_report(Y_test, Y_test_pred))
 
-    # Confusion Matrix
-    logging.info("\nConfusion Matrix (Test):")
-    logging.info(confusion_matrix(Y_test, Y_test_pred))
+    # Predict probabilities for the test set
+    Y_proba = model.predict_proba(X_test)[:, 1]
+
+    plot_lr_roc(Y_test, Y_proba)
+
+    logging.info("ROC curve plot saved as lr_roc_curve.png")
 
     return model
 

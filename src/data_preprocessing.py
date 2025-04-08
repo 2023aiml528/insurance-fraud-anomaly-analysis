@@ -8,6 +8,8 @@ import math
 from joblib import dump, load
 from tensorflow.keras.models import load_model
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report, confusion_matrix
+import matplotlib.pyplot as plt
+
 
 # Dynamically handle imports based on execution context
 try:
@@ -337,6 +339,9 @@ def preprocess_raw_input(raw_input):
     # Convert raw input to DataFrame
     df_raw = pd.DataFrame([raw_input])
 
+    # Handle missing values by replacing NaN with 0
+    df_raw = df_raw.fillna(0)
+
     df_raw = preprocess_data(df_raw)
     df_raw = df_raw.select_dtypes(include=['number'])
     logging.info(f"Processed DataFrame:\n{df_raw.head().T}")
@@ -427,3 +432,24 @@ def retrain_dnn_model():
     dnn_model, history = build_and_evaluate_deep_learning_model(X_nn, X_train, Y_train, X_val, Y_val, X_test, Y_test)
     dnn_model.save(config["models"]["deep_learning"])  # SavedModel format
     print("Model Deep Learing retrained & saved!")    
+
+
+
+def save_dnn_training_plot(history, output_path="dnn_training_accuracy.png"):
+    """
+    Save the DNN training accuracy plot.
+
+    Args:
+        history: Training history object containing accuracy and loss values.
+        output_path: Path to save the plot.
+    """
+    plt.figure(figsize=(10, 6))
+    plt.plot(history['accuracy'], label='Training Accuracy')
+    plt.plot(history['val_accuracy'], label='Validation Accuracy')
+    plt.title('DNN Training Accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(output_path)
+    plt.close()    

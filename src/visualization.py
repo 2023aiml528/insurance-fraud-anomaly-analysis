@@ -43,3 +43,51 @@ def perform_shap_analysis(model, X_train, model_name="Model", feature_names=None
         logging.info(f"SHAP summary plot saved for {model_name}.")
     except Exception as e:
         logging.error(f"Error during SHAP analysis for {model_name}: {str(e)}")
+
+
+# visualization.py
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_curve, auc
+
+def plot_lr_roc(y_true, y_proba, save_path="lr_roc_curve.png"):
+    """
+    Function to plot ROC curve for Logistic Regression.
+
+    Parameters:
+    - y_true: Array of true labels
+    - y_proba: Array of predicted probabilities
+    - save_path: File path to save the plot
+    """
+    fpr, tpr, _ = roc_curve(y_true, y_proba)
+    roc_auc = auc(fpr, tpr)
+
+    plt.figure()
+    plt.plot(fpr, tpr, color="blue", label=f"ROC Curve (area = {roc_auc:.2f})")
+    plt.plot([0, 1], [0, 1], color="gray", linestyle="--")
+    plt.title("Logistic Regression ROC Curve")
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
+    plt.legend()
+    plt.savefig(save_path)
+    plt.close()        
+
+
+
+def save_dnn_training_plot(history, output_path="dnn_training_accuracy.png"):
+    """
+    Save the DNN training accuracy plot.
+
+    Args:
+        history: Training history object containing accuracy and loss values.
+        output_path: Path to save the plot.
+    """
+    plt.figure(figsize=(10, 6))
+    plt.plot(history['accuracy'], label='Training Accuracy')
+    plt.plot(history['val_accuracy'], label='Validation Accuracy')
+    plt.title('DNN Training Accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.legend()
+    plt.grid(True)
+    plt.savefig("dnn_training_accuracy.png")
+    plt.close()      

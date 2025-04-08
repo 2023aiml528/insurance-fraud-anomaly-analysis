@@ -11,14 +11,18 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from joblib import dump, load
 from imblearn.over_sampling import SMOTE
 from tensorflow.keras.metrics import Precision, Recall
+import matplotlib.pyplot as plt
+
+
 
 # Dynamically handle imports based on execution context
 try:
     # When running from `main.py`
-
+    from visualization import save_dnn_training_plot
     from utils import load_data, encode_categorical, normalize_data, split_data, load_config
 except ModuleNotFoundError:
     # When running from FastAPI (e.g., `uvicorn`)
+    from src.visualization import save_dnn_training_plot
     from src.utils import load_data, encode_categorical, normalize_data, split_data, load_config
 
 
@@ -73,7 +77,7 @@ def build_and_evaluate_deep_learning_model(X, X_train, Y_train, X_val, Y_val, X_
         verbose=2, #callbacks=[early_stop]
     )
 
-    
+    save_dnn_training_plot(history.history)
 
     # Evaluate the model on the test set
     logging.info("\nEvaluating the model on the test set...")
@@ -156,4 +160,5 @@ class CustomEarlyStopping(EarlyStopping):
             self.best_weights = self.model.get_weights()
         super().on_epoch_end(epoch, logs)
 
+ 
 
