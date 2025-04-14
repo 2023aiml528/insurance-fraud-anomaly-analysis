@@ -391,6 +391,8 @@ def retrain_lr_model():
 
     # Train new model
     model = train_and_evaluate_logistic_regression(X_lr, X_train, Y_train, X_val, Y_val, X_test, Y_test)
+    # Perform SHAP analysis
+    perform_shap_analysis(model, X_train, model_name="Logistic Regression")
     logging.info("Model Logistic Regression model retrained & saved!")
 
 def trigger_model_retraining():
@@ -430,6 +432,7 @@ def retrain_dnn_model():
     
     # Train new model
     dnn_model, history = build_and_evaluate_deep_learning_model(X_nn, X_train, Y_train, X_val, Y_val, X_test, Y_test)
+    perform_shap_analysis(dnn_model, X_train, model_name="Deep Learning")
     dnn_model.save(config["models"]["deep_learning"])  # SavedModel format
     print("Model Deep Learing retrained & saved!")    
 

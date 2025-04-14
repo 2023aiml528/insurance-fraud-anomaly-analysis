@@ -59,7 +59,7 @@ def build_and_evaluate_deep_learning_model(X, X_train, Y_train, X_val, Y_val, X_
         pickle.dump(scaler_data, f)
 
         # Balance dataset using SMOTE (if needed)
-    smote = SMOTE(random_state=42)
+    smote = SMOTE(random_state=42, k_neighbors=2)
     X_train_resampled, Y_train_resampled = smote.fit_resample(X_train, Y_train)
 
     # Build the model
@@ -127,12 +127,33 @@ def build_model(input_dim):
     model.add(Dense(39, activation='relu', input_dim=input_dim))  # Match input features
     model.add(BatchNormalization())  # Helps stabilize training
 
-    # Hidden layers with dropout to prevent overfitting
-    for _ in range(5):  # Reduce layers for efficiency
-        model.add(Dense(64))  
-        model.add(BatchNormalization())  # Place before activation  
-        model.add(Activation('relu'))  
-        model.add(Dropout(0.3))  # Enable dropout 
+    # Train the model hiden Layers
+    model.add(Dense(50))  
+    model.add(BatchNormalization())  # Place before activation  
+    model.add(Activation('relu'))  
+    model.add(Dropout(0.3))  # Enable dropout
+
+    model.add(Dense(30))  
+    model.add(BatchNormalization())  # Place before activation  
+    model.add(Activation('relu'))  
+    model.add(Dropout(0.3))  # Enable dropout
+    
+    model.add(Dense(25))  
+    model.add(BatchNormalization())  # Place before activation  
+    model.add(Activation('relu'))  
+    model.add(Dropout(0.3))  # Enable dropout
+    
+    model.add(Dense(15))  
+    model.add(BatchNormalization())  # Place before activation  
+    model.add(Activation('relu'))  
+    model.add(Dropout(0.3))  # Enable dropout
+    
+    model.add(Dense(5))  
+    model.add(BatchNormalization())  # Place before activation  
+    model.add(Activation('relu'))  
+    model.add(Dropout(0.3))  # Enable dropout
+    
+
 
     # Output layer for binary classification
     model.add(Dense(1, activation='sigmoid'))

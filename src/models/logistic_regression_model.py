@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from joblib import dump
 import logging
 from sklearn.preprocessing import MinMaxScaler
+from imblearn.over_sampling import SMOTE
 import yaml
 import sys
 import os
@@ -48,10 +49,29 @@ def train_and_evaluate_logistic_regression(X, X_train, Y_train, X_val, Y_val, X_
     X_val = scaler.transform(X_val[X.columns])
     X_test = scaler.transform(X_test[X.columns])
 
+    smote = SMOTE(random_state=42, k_neighbors=2)
+    X_train_resampled, Y_train_resampled = smote.fit_resample(X_train, Y_train)
+
+    import pandas as pd
+
+    # Convert NumPy array back to Pandas DataFrame
+    X_train_resampled_df = pd.DataFrame(X_train_resampled, columns=X.columns)
 
 
     # Train the model on the training set
-    model.fit(X_train, Y_train)
+    model.fit(X_train_resampled, Y_train_resampled)
+
+
+    # Print feature importance (coefficients)
+    importance = model.coef_[0]
+    feature_importance = dict(zip(X_train_resampled_df.columns, importance))
+    sorted_features = sorted(feature_importance.items(), key=lambda x: abs(x[1]), reverse=True)
+
+    logging.info("Feature Importance:")
+    for feature, coef in sorted_features:
+        logging.info(f"{feature}: {coef:.4f}")  
+
+    
 
     model_data = {
         "model": model,
@@ -63,6 +83,10 @@ def train_and_evaluate_logistic_regression(X, X_train, Y_train, X_val, Y_val, X_
     # Save the trained model
     dump(model_data, config["models"]["logistic_regression"])
     logging.info("Model saved successfully!")
+
+
+
+    logging.info("Feature Importance:", sorted_features)
 
     # Validate the model on the validation set
     Y_val_pred = model.predict(X_val)
