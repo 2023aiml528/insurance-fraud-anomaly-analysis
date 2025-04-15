@@ -18,7 +18,9 @@ logs/
 .vscode/
 
 # Ignore model files
-models/*.pkl
+models
+
+data/glove/
 
 # Ignore Jupyter Notebook checkpoints
 .ipynb_checkpoints/
