@@ -73,7 +73,13 @@ Includes unit tests:
 -🔹 Overview
 The API is built using FastAPI, allowing clients to interact with the fraud detection models. It supports endpoints for predicting fraudulent insurance claims, retrieving model details, and handling uploaded datasets.
 To explore and test the API interactively, visit the Swagger UI:
-👉 [Swagger API Docs](http://127.0.0.1:8000/docs#/default)
+
+-👉 [Swagger API Docs](http://127.0.0.1:8000/docs#/default)
+
+🌍 Application Dashboard UI
+Dashboad given to train the data and post training it can predict the Traget value for input provided. 
+
+-👉 [Application Dashboard](http://127.0.0.1:8000/dashboard)
 
 📌 API Endpoints
 
