@@ -35,7 +35,7 @@ log_folder = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__)
 os.makedirs(log_folder, exist_ok=True)
 log_file_path = os.path.join(log_folder, "app.log")
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(filename)s - %(funcName)s - Line: %(lineno)d - %(message)s",
     handlers=[
         logging.FileHandler(log_file_path),
@@ -172,9 +172,9 @@ def run_training(file_path):
     global training_status
     try:
         # Step 1: Merge the uploaded CSV into the master dataset
-        training_status["status"] = "Merging CSV into master dataset"
+        training_status["status"] = "Merging CSV with master dataset"
         training_status["progress"] = 20
-        logging.info("Merging CSV into master dataset...")
+        logging.info("Merging CSV with master dataset...")
         merge_csv(file_path)
         logging.info("CSV merged successfully.")
 

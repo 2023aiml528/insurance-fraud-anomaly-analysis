@@ -95,6 +95,7 @@ models:
   logistic_regression: "models/logistic_regression_model.pkl"
   deep_learning: "models/deep_learning_model.keras"
   scaler: "models/scaler.pkl"
+  encoder: "models/encoder.pkl"
 
 logging:
   level: "INFO"  # Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)

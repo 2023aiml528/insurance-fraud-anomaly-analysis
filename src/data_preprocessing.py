@@ -1,3 +1,4 @@
+import pickle
 import sys
 import os
 import pandas as pd
@@ -84,6 +85,7 @@ def preprocess_data(df):
 
 
     if columns_to_encode:
+
         df =encode_selected_columns(df, columns_to_encode)
     else:
         logging.info("No categorical columns to encode.")
@@ -167,33 +169,55 @@ def convert_object_columns_to_category(df, categorical_features, date_format=Non
 
     return df
 
+import pandas as pd
+import pickle
+import logging
+import os
+from sklearn.preprocessing import LabelEncoder
+
 def encode_selected_columns(df, columns_to_encode):
     """
-    Applies label encoding to the specified columns in the DataFrame.
+    Applies label encoding to the specified columns and stores the encoder.
 
     Parameters:
         df (pd.DataFrame): The input DataFrame.
         columns_to_encode (list): List of column names to encode.
+        encoder_file (str): Path to store the encoder dictionary.
 
     Returns:
-        pd.DataFrame: The updated DataFrame with encoded columns.
+        pd.DataFrame: Updated DataFrame with encoded columns.
     """
-    # Create a copy of the original DataFrame
-    #df = df.copy()
     logging.info(f"Columns to encode: {columns_to_encode}")
-    # Initialize the LabelEncoder
-    label_encoder = LabelEncoder()
+    encoder_file = config["models"]["encoder"]  # Path to store the encoder dictionary
+    # Load existing encoder if the file exists, otherwise initialize an empty dictionary
+    if os.path.exists(encoder_file):
+        with open(encoder_file, "rb") as f:
+            encoders = pickle.load(f)
+        logging.info("Loaded existing encoders from file.")
+    else:
+        encoders = {}
+        logging.info("No encoder file found, creating new encoders.")
 
     # Apply label encoding to selected columns
     for column in columns_to_encode:
         if column in df.columns:
-            df[column + '_encoded'] = label_encoder.fit_transform(df[column])
+            if column in encoders:
+                df[column + '_encoded'] = encoders[column].transform(df[column])
+            else:
+                encoder = LabelEncoder()
+                df[column + '_encoded'] = encoder.fit_transform(df[column])
+                encoders[column] = encoder  # Store encoder for future use
         else:
-            logging.info(f"Warning: Column '{column}' not found in the DataFrame.")
+            logging.warning(f"Warning: Column '{column}' not found in the DataFrame.")
 
-    # Display the updated DataFrame information
-    logging.info(f"Updated DataFrame columns after label encoding: {df.columns.tolist()}")
-    
+    # Save encoders only if the file does NOT exist
+    if not os.path.exists(encoder_file):
+        with open(encoder_file, "wb") as f:
+            pickle.dump(encoders, f)
+        print("Encoders saved successfully!")
+    else:
+        print("Encoder file already exists, skipping save.")
+
     return df
 
 import numpy as np

@@ -153,26 +153,26 @@ def merge_csv(file_path):
     if os.path.exists(master_data):
         # Generate a unique backup filename with a timestamp
         backup_file = os.path.join(
-            backup_folder, f"train_data_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+            backup_folder, f"train_data_backup_with_master_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
         )
 
         # Use shutil.copy2 to preserve metadata
-        shutil.copy2(master_data, backup_file)
-        logging.info(f"Backup saved successfully at: {backup_file}")
+        shutil.copy2(master_data,backup_file)
+        logging.info(f"Merged filed saved successfully at: {backup_file}")
 
     # Load the new data
     uploaded_df = pd.read_csv(file_path)
     logging.info(f"Uploaded data shape: {uploaded_df.shape}")
 
     # Merge with existing data
-    if os.path.exists(master_data):
+    if os.path.exists(backup_folder):
         master_df = pd.read_csv(master_data)
         combined_df = pd.concat([master_df, uploaded_df], ignore_index=True)
     else:
         combined_df = uploaded_df  # If no previous file exists, use the new upload
 
     # Save the updated master file
-    combined_df.to_csv(master_data, index=False)
+    combined_df.to_csv(backup_file, index=False)
     logging.info(f"merged data set shape: {combined_df.shape}")
     logging.info(f"Type of df before head(): {type(combined_df)}")
     logging.info("Master dataset updated for retraining!")
