@@ -12,17 +12,18 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 import matplotlib.pyplot as plt
 
 
+
 # Dynamically handle imports based on execution context
 try:
     # When running from `main.py`
-    from utils import load_data, encode_categorical, normalize_data, split_data, load_config
+    from utils import load_data, encode_categorical, normalize_data, split_data, load_config, get_latest_file
     from anomaly_detection import AnomalyDetector
     from models.deep_learning_model import build_and_evaluate_deep_learning_model
     from models.logistic_regression_model import train_and_evaluate_logistic_regression
     from visualization  import perform_shap_analysis
 except ModuleNotFoundError:
     # When running from FastAPI (e.g., `uvicorn`)
-    from src.utils import load_data, encode_categorical, normalize_data, split_data, load_config
+    from src.utils import load_data, encode_categorical, normalize_data, split_data, load_config, get_latest_file
     from src.anomaly_detection import AnomalyDetector
     from src.models.deep_learning_model import build_and_evaluate_deep_learning_model
     from src.models.logistic_regression_model import train_and_evaluate_logistic_regression
@@ -202,11 +203,21 @@ def encode_selected_columns(df, columns_to_encode):
     for column in columns_to_encode:
         if column in df.columns:
             if column in encoders:
-                df[column + '_encoded'] = encoders[column].transform(df[column])
+                encoder = encoders[column]  # Load existing encoder
+                known_classes = set(encoder.classes_)
+                logging.info("Stored Label Classes:", encoder.classes_)
+                for idx, label in enumerate(encoder.classes_):
+                    logging.info(f"Column: {column} | Label: {label} -> Encoded: {idx}")
+                # Encode only known values, set unknowns as -1
+                df[column + '_encoded'] = df[column].apply(
+                    lambda x: encoder.transform([x])[0] if x in known_classes else -1
+                )
             else:
                 encoder = LabelEncoder()
                 df[column + '_encoded'] = encoder.fit_transform(df[column])
                 encoders[column] = encoder  # Store encoder for future use
+
+                
         else:
             logging.warning(f"Warning: Column '{column}' not found in the DataFrame.")
 
@@ -385,8 +396,16 @@ def retrain_lr_model():
     current_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     
     logging.info(f"Current path root: {current_path}")
-    master_data = os.path.join(current_path, config["storage"]["master_csv"])
-    logging.info(f"Master data path: {master_data}")
+    backup_folder = config["storage"]["backup"]["folder"]
+    backup_folder = os.path.join(current_path, backup_folder)
+
+    latest_file = get_latest_file(backup_folder, "csv")  # Change extension as needed
+    logging.info(f"Latest file: {latest_file}")
+
+    if latest_file:
+        # Use the latest file for retraining
+        master_data = latest_file   
+
     # Load latest data
     df = pd.read_csv(master_data)
     logging.info(f"Data loaded from {master_data}")

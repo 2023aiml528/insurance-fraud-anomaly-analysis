@@ -27,7 +27,7 @@ except ModuleNotFoundError:
 
 
 # Function to build and evaluate the deep learning model
-def build_and_evaluate_deep_learning_model(X, X_train, Y_train, X_val, Y_val, X_test, Y_test, epochs=20, batch_size=20):
+def build_and_evaluate_deep_learning_model(X, X_train, Y_train, X_val, Y_val, X_test, Y_test, epochs=50, batch_size=20):
     """
     Builds, trains, and evaluates a deep learning neural network model.
     """

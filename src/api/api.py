@@ -15,12 +15,13 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 import pickle
 import yaml
-from src.utils import load_config, merge_csv
+from src.utils import get_latest_file, load_config, merge_csv
 import webbrowser
 
 # Add the src directory to PYTHONPATH
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
-
+import os
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 # Initialize FastAPI
 app = FastAPI()
 
@@ -88,6 +89,7 @@ def read_root():
 @app.post("/predict")
 def predict(input_data: PredictionInput):
     model_path = config["models"]["logistic_regression"]
+    anomaly_present = "No"
     if not os.path.exists(model_path):
         raise HTTPException(status_code=400, detail="Logistic Regression model not found.")
     model_data = load(model_path)
@@ -96,18 +98,25 @@ def predict(input_data: PredictionInput):
     lr_scaler = model_data["scaler"]
     raw_input = input_data.dict()
     processed_df = preprocess_raw_input(raw_input)
+    if processed_df["any_anomaly"].iloc[0] == 1:
+        anomaly_present = "Yes"
+
     missing_columns = set(lr_feature_names) - set(processed_df.columns)
     for col in missing_columns:
         processed_df[col] = 0
     processed_df = processed_df[lr_feature_names]
     processed_df = lr_scaler.transform(processed_df)
+    logging.info(f"Processed DataFrame: {processed_df}")
+    
     prediction = model.predict(processed_df)
     prediction_proba = model.predict_proba(processed_df)
-    return {"prediction": int(prediction[0]), "probability": prediction_proba[0].tolist()}
+    return {"prediction": int(prediction[0]), "probability": prediction_proba[0].tolist(), "anomaly_present": anomaly_present}
 
 # Prediction endpoint for Neural Network
 @app.post("/nn/predict")
 def nn_predict(input_data: PredictionInput):
+    anomaly_present = "No"
+
     scaler_path = config["models"]["scaler"]
     nn_model_path = config["models"]["deep_learning"]
     if not os.path.exists(scaler_path) or not os.path.exists(nn_model_path):
@@ -119,15 +128,20 @@ def nn_predict(input_data: PredictionInput):
     feature_names = loaded_data["feature_names"]
     raw_input = input_data.dict()
     processed_df = preprocess_raw_input(raw_input)
+    if processed_df["any_anomaly"].iloc[0] == 1:
+        anomaly_present = "Yes"
+ 
+
     processed_df = processed_df.apply(pd.to_numeric, errors='coerce').fillna(0)
     missing_columns = set(feature_names) - set(processed_df.columns)
     for col in missing_columns:
         processed_df[col] = 0
     processed_df = processed_df[feature_names]
     processed_array_normalized = scaler.transform(processed_df)
+        
     prediction_proba = nn_model.predict(processed_array_normalized)
     prediction = (prediction_proba > 0.5).astype(int)
-    return {"prediction": int(prediction[0][0]), "probability": float(prediction_proba[0][0])}
+    return {"prediction": int(prediction[0]), "probability": float(prediction_proba[0][0]), "anomaly_present": anomaly_present}
 
 @app.post("/train")
 async def train(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
@@ -164,8 +178,10 @@ async def train(background_tasks: BackgroundTasks, file: UploadFile = File(...))
 
     logging.info(f"File saved successfully: {file_path}")
 
+    latest_file = get_latest_file(upload_folder, "csv")  # Change extension as needed
+    logging.info(f"Latest file: {latest_file}")
     # Run training in the background
-    background_tasks.add_task(run_training, file_path)
+    background_tasks.add_task(run_training, latest_file)
     return {"message": "Training started"}
 
 def run_training(file_path):

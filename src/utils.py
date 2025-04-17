@@ -9,6 +9,8 @@ import os
 import json
 import os
 import yaml
+import os
+import glob
 
 
 # Add the src directory to PYTHONPATH
@@ -156,9 +158,9 @@ def merge_csv(file_path):
             backup_folder, f"train_data_backup_with_master_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
         )
 
-        # Use shutil.copy2 to preserve metadata
-        shutil.copy2(master_data,backup_file)
-        logging.info(f"Merged filed saved successfully at: {backup_file}")
+    # Use shutil.copy2 to preserve metadata
+    shutil.copy2(master_data,backup_file)
+    logging.info(f"Merged filed saved successfully at: {backup_file}")
 
     # Load the new data
     uploaded_df = pd.read_csv(file_path)
@@ -166,8 +168,8 @@ def merge_csv(file_path):
 
     # Merge with existing data
     if os.path.exists(backup_folder):
-        master_df = pd.read_csv(master_data)
-        combined_df = pd.concat([master_df, uploaded_df], ignore_index=True)
+        exiting_df = pd.read_csv(backup_file)
+        combined_df = pd.concat([exiting_df, uploaded_df], ignore_index=True)
     else:
         combined_df = uploaded_df  # If no previous file exists, use the new upload
 
@@ -176,3 +178,29 @@ def merge_csv(file_path):
     logging.info(f"merged data set shape: {combined_df.shape}")
     logging.info(f"Type of df before head(): {type(combined_df)}")
     logging.info("Master dataset updated for retraining!")
+
+
+
+def get_latest_file(folder_path, file_extension=".csv"):
+    """
+    Get the latest file from a specified folder based on modification time.
+
+    Parameters:
+        folder_path (str): Path to the folder.
+        file_extension (str): File extension to filter (default: "*" for all files).
+
+    Returns:
+        str: Path of the latest file.
+    """
+
+    files = glob.glob(os.path.join(folder_path, f"*.{file_extension}"))  # List all matching files
+    
+    if not files:  # If no files are found
+        logging.info(f"No file present on folder_path  : {folder_path}") 
+        return None
+
+    latest_file = max(files, key=os.path.getmtime)  # Find the most recently modified file
+    logging.info(f"Latest file found on folder_path  : {folder_path, latest_file}")  
+    return latest_file
+
+
