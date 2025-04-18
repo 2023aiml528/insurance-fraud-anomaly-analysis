@@ -30,7 +30,8 @@ Provides application logs for **debugging and monitoring**.
 Contains stored models for fraud prediction:  
 - **`logistic_regression_model.pkl`** → model dump kept once trained.  
 - **`deep_learning_model`** → tantensorflow  **DNN model** dump.  
-- **`scaler.pkl`** → dump for scaler used  on trained DNN model 
+- **`scaler.pkl`** → dump for scaler used  on trained  models
+- **`encoder.pkl`** → dump for encoder used on trained  models 
 
 
 
@@ -39,29 +40,40 @@ Contains main project logic:
 - `data_preprocessing.py` → Functions for loading and cleaning data.  
 - `anomaly_detection.py` → Methods for detecting anomalies in insurance claims.  
 - `visualization.py` → Generates charts and graphs.  
-- `utils.py` → Utility functions used across the project. 
+- `utils.py` → Utility functions used across the project.
+
+  
+
 - /(`models/`)-> 
 - **`logistic_regression_model.py`** → Implements a logistic regression model for fraud detection.  
 - **`deep_learning_model.py`** → Builds and trains a **DNN model** to classify fraudulent claims.  
-- **`transformer_model.py`** → Currently in the **initial phase of development**, with plans to integrate it with an existing **Hugging Face transformer model**, leveraging the latest OpenAI-powered architectures for fraud detection. 
+- **`transformer_model.py`** → Currently in the **initial phase of development**, with plans to integrate it with an existing **Hugging Face transformer model**, leveraging the latest OpenAI-powered architectures for fraud detection.
+
+  
 
 ### **🔹 Future Goals for the Transformer Model**  
 - ✅ **Advanced NLP Capabilities** → Utilize transformer-based models for fraud pattern analysis.  
 - ✅ **Integration with Hugging Face** → Leverage pretrained models for better accuracy and efficiency.  
 - ✅ **Enhanced Fraud Prediction** → Improve classification of insurance claims using deep learning.  
-- ✅ **Optimized Performance** → Fine-tune the model for real-time fraud detection.  
+- ✅ **Optimized Performance** → Fine-tune the model for real-time fraud detection.
+  
 
 As development progresses, this model will complement existing **Logistic Regression and Deep Learning approaches**, offering a **state-of-the-art fraud detection framework**.
 
 ### **Tests (`tests/`)**  
 Includes unit tests:  
-- `test_anomaly_detection.py` → Validates anomaly detection logic.  
+- `test_anomaly_detection.py` → Validates anomaly detection logic.
+
+  
 
 ### **Others**  
 - **`notebooks/`** → Contains Jupyter notebooks for analysis.  
 - **`requirements.txt`** → Lists dependencies required for the project.  
 - **`.gitignore`** → Specifies ignored files for version control.  
-- **`README.md`** → Project documentation.  
+- **`README.md`** → Project documentation.
+- **`Generate_data.ipynb`** → Synthetic Data Generation.
+
+  
 
 ## **🚀 API Instructions**  
 ### **Start the FastAPI Server**  
@@ -69,12 +81,17 @@ Includes unit tests:
  uvicorn src.api.api:app --reload --log-level info  # Insurance Fraud Anomaly Analysis
 ```
 
+
 ## **🌍 API Documentation**
 -🔹 Overview
 The API is built using FastAPI, allowing clients to interact with the fraud detection models. It supports endpoints for predicting fraudulent insurance claims, retrieving model details, and handling uploaded datasets.
 To explore and test the API interactively, visit the Swagger UI:
 
 -👉 [Swagger API Docs](http://127.0.0.1:8000/docs#/default)
+
+
+
+
 
 🌍 Application Dashboard UI
 Dashboad given to train the data and post training it can predict the Traget value for input provided. 
@@ -94,6 +111,7 @@ POST /train
 -3️⃣ Predict Fraud in an Insurance Claim using DNN
 Endpoint:
 POST /nn/predict
+
 
 ## 💻 Installation
 -1️⃣ Create a Python Environment
