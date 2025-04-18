@@ -134,50 +134,58 @@ import pandas as pd
 from datetime import datetime
 import logging
 
+import os
+import shutil
+import logging
+import pandas as pd
+from datetime import datetime
+
 def merge_csv(file_path):
     config = load_config()
-    
-    """Merges uploaded CSV into the main training dataset while taking a backup."""
-    
+
+    """Merges uploaded CSV into either the latest backup file (if present) or the master dataset."""
+
     # Move up one level from `src` to reach project root
     current_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     logging.info(f"Current path root: {current_path}")
 
+    # Define backup folder and master dataset paths
+    backup_folder = os.path.join(current_path, config["storage"]["backup"]["folder"])
     master_data = os.path.join(current_path, config["storage"]["master_csv"])
+    os.makedirs(backup_folder, exist_ok=True)
+
+    logging.info(f"Backup folder: {backup_folder}")
     logging.info(f"Master data path: {master_data}")
 
-    # Ensure the backup folder is defined before checking the master file
-    backup_folder = os.path.join(current_path, config["storage"]["backup"]["folder"])
-    os.makedirs(backup_folder, exist_ok=True)
-    logging.info(f"Backup folder: {backup_folder}")
+    # Find the latest backup file
+    latest_file = get_latest_file(backup_folder, "csv")  
+    if latest_file and os.path.exists(latest_file):
+        logging.info(f"Latest backup file found: {latest_file}")
+        base_df = pd.read_csv(latest_file)
+    elif os.path.exists(master_data):  
+        logging.info(f"No backup found. Using master CSV: {master_data}")
+        base_df = pd.read_csv(master_data)
+    else:
+        logging.error("No backup or master file found! Using only uploaded data.")
+        base_df = pd.DataFrame()  # Empty DataFrame if no existing dataset
 
-    # Backup the existing master file before merging
-    if os.path.exists(master_data):
-        # Generate a unique backup filename with a timestamp
-        backup_file = os.path.join(
-            backup_folder, f"train_data_backup_with_master_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-        )
-
-    # Use shutil.copy2 to preserve metadata
-    shutil.copy2(master_data,backup_file)
-    logging.info(f"Merged filed saved successfully at: {backup_file}")
-
-    # Load the new data
+    # Load new uploaded data
     uploaded_df = pd.read_csv(file_path)
     logging.info(f"Uploaded data shape: {uploaded_df.shape}")
 
-    # Merge with existing data
-    if os.path.exists(backup_folder):
-        exiting_df = pd.read_csv(backup_file)
-        combined_df = pd.concat([exiting_df, uploaded_df], ignore_index=True)
-    else:
-        combined_df = uploaded_df  # If no previous file exists, use the new upload
+    # Merge uploaded data with either latest backup or master file
+    combined_df = pd.concat([base_df, uploaded_df], ignore_index=True)
 
-    # Save the updated master file
-    combined_df.to_csv(backup_file, index=False)
-    logging.info(f"merged data set shape: {combined_df.shape}")
-    logging.info(f"Type of df before head(): {type(combined_df)}")
-    logging.info("Master dataset updated for retraining!")
+    # Save the merged dataset with a new timestamp in the backup folder
+    new_backup_file = os.path.join(
+        backup_folder, f"merged_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    )
+    combined_df.to_csv(new_backup_file, index=False)
+
+    logging.info(f"Merged dataset saved at: {new_backup_file}")
+    logging.info(f"Updated backup dataset shape: {combined_df.shape}")
+
+    return new_backup_file
 
 
 

@@ -453,8 +453,15 @@ def retrain_dnn_model():
     current_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     
     logging.info(f"Current path root: {current_path}")
-    master_data = os.path.join(current_path, config["storage"]["master_csv"])
-    logging.info(f"Master data path: {master_data}")
+    backup_folder = config["storage"]["backup"]["folder"]
+    backup_folder = os.path.join(current_path, backup_folder)
+
+    latest_file = get_latest_file(backup_folder, "csv")  # Change extension as needed
+    logging.info(f"Latest file: {latest_file}")
+
+    if latest_file:
+        # Use the latest file for retraining
+        master_data = latest_file   
     # Load latest data
     df = pd.read_csv(master_data)
     logging.info(f"Data loaded from {master_data}")
