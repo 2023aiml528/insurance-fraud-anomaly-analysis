@@ -18,20 +18,27 @@ Stores the main dataset and supporting files, organized into:
 - **Backup/** → Archived versions of datasets for safekeeping.  
 - **Glove/** → Word embeddings (`glove.6B.50d.txt`) for NLP tasks.  
 - **Uploaded Files/** → Stores user-uploaded datasets.  
-- **Master Dataset** → `"data/updated_health_insurance_data_Benefits_with_discharge_summary.csv"`  
+- **Master Dataset** → `"data/updated_health_insurance_data_Benefits_with_discharge_summary.csv"`
+
+ <br> 
 
 ### **Configuration (`config/`)**  
-Contains the **primary YAML configuration file** specifying dataset paths, model settings, and logging configurations.  
+
+
+- **`config.yaml`** → Contains the **primary YAML configuration file** specifying dataset paths, model settings, and logging configurations.
+ <br>
 
 ### **Logging (`log/`)**  
 Provides application logs for **debugging and monitoring**.  
 
-### **Models (`models/`)**  
+### **Models Dumps (`models/`)**  
 Contains stored models for fraud prediction:  
 - **`logistic_regression_model.pkl`** → model dump kept once trained.  
 - **`deep_learning_model`** → tantensorflow  **DNN model** dump.  
 - **`scaler.pkl`** → dump for scaler used  on trained  models
-- **`encoder.pkl`** → dump for encoder used on trained  models 
+- **`encoder.pkl`** → dump for encoder used on trained  models
+
+<br>
 
 
 
@@ -42,14 +49,19 @@ Contains main project logic:
 - `visualization.py` → Generates charts and graphs.  
 - `utils.py` → Utility functions used across the project.
 
+ <br>
+
+ ### **Dashboard (`templates/`)**  
+ - `dashboard.html` → UI Intraction with Models to train and predict.
+ <br>
   
 
-- /(`models/`)-> 
+### **Models (`models/`)** 
 - **`logistic_regression_model.py`** → Implements a logistic regression model for fraud detection.  
 - **`deep_learning_model.py`** → Builds and trains a **DNN model** to classify fraudulent claims.  
 - **`transformer_model.py`** → Currently in the **initial phase of development**, with plans to integrate it with an existing **Hugging Face transformer model**, leveraging the latest OpenAI-powered architectures for fraud detection.
 
-  
+<br> 
 
 ### **🔹 Future Goals for the Transformer Model**  
 - ✅ **Advanced NLP Capabilities** → Utilize transformer-based models for fraud pattern analysis.  
@@ -64,7 +76,7 @@ As development progresses, this model will complement existing **Logistic Regres
 Includes unit tests:  
 - `test_anomaly_detection.py` → Validates anomaly detection logic.
 
-  
+ <br>  
 
 ### **Others**  
 - **`notebooks/`** → Contains Jupyter notebooks for analysis.  
@@ -73,7 +85,8 @@ Includes unit tests:
 - **`README.md`** → Project documentation.
 - **`Generate_data.ipynb`** → Synthetic Data Generation.
 
-  
+
+<br><br>
 
 ## **🚀 API Instructions**  
 ### **Start the FastAPI Server**  
@@ -81,6 +94,7 @@ Includes unit tests:
  uvicorn src.api.api:app --reload --log-level info  # Insurance Fraud Anomaly Analysis
 ```
 
+<br><br>
 
 ## **🌍 API Documentation**
 -🔹 Overview
@@ -88,9 +102,6 @@ The API is built using FastAPI, allowing clients to interact with the fraud dete
 To explore and test the API interactively, visit the Swagger UI:
 
 -👉 [Swagger API Docs](http://127.0.0.1:8000/docs#/default)
-
-
-
 
 
 🌍 Application Dashboard UI
@@ -112,6 +123,7 @@ POST /train
 Endpoint:
 POST /nn/predict
 
+ <br> <br>
 
 ## 💻 Installation
 -1️⃣ Create a Python Environment
